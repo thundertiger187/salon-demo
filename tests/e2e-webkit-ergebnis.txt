@@ -1,0 +1,17 @@
+WebKit iPhone 14 – 16/16 bestanden
+OK   WebKit/iPhone 14: Seite lädt – {'width': 390, 'height': 664} UA iPhone
+OK   apple-touch-icon 180x180 lädt
+OK   iOS-Meta-Tags vorhanden – ['yes', 'yes', 'default', 'Da Giovanni', '#F6F1EA']
+OK   viewport-fit=cover
+OK   „App installieren“-Karte auf iOS sichtbar
+OK   iOS-Hinweis: Teilen → Zum Home-Bildschirm → Hinzufügen
+OK   Hinweis schließt
+OK   kein Überlauf (start) – [390, 390]
+OK   kein Überlauf (leistungen) – [390, 390]
+OK   kein Überlauf (buchen) – [390, 390]
+OK   kein Überlauf (zeiten) – [390, 390]
+OK   kein Überlauf (kontakt) – [390, 390]
+OK   kein Überlauf (termine) – [390, 390]
+OK   Buchung in WebKit – 09:00
+OK   Standalone (navigator.standalone): kein Install-Hinweis
+OK   Keine Konsolen-/Seitenfehler (WebKit) – []

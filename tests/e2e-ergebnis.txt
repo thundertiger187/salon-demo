@@ -1,0 +1,75 @@
+E2E 2026-10-20 22:57 – 70/70 bestanden – http://localhost:8765/salon-demo/
+OK   Startseite lädt unter Unterpfad
+OK   Service Worker registriert, Scope = Unterpfad – http://localhost:8765/salon-demo/
+OK   Service Worker kontrolliert die Seite – http://localhost:8765/salon-demo/sw.js
+OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v1'], 'n': 19}
+OK   Manifest Content-Type – application/manifest+json
+OK   Manifest Felder (name/short_name/display/start_url/scope/Farben) – {'name': 'Haardesign Da Giovanni', 'short_name': 'Da Giovanni', 'start_url': './', 'scope': './', 'display': 'standalone'}
+OK   Icon lädt icons/icon-192.png (any) – 192x192
+OK   Icon lädt icons/icon-512.png (any) – 512x512
+OK   Icon lädt icons/icon-512-maskable.png (maskable) – 512x512
+OK   192er + 512er + maskable vorhanden
+OK   apple-touch-icon lädt – 200
+OK   meta theme-color gesetzt
+OK   Chrome-Installierbarkeit (Page.getInstallabilityErrors leer) – {'installabilityErrors': []}
+OK   Chrome parst Manifest ohne Fehler – []
+OK   „App installieren“ nur bei beforeinstallprompt sichtbar – beforeinstallprompt=False, Karte sichtbar=False
+OK   Hero-Buttons Termin buchen + Anrufen
+OK   Name im Kopf aus Konfiguration
+OK   kein horizontales Überlaufen (start) – [390, 390]
+OK   „Beispielpreise“ sichtbar in Leistungen
+OK   Kategorien Damen/Herren/Kinder/Farbe
+OK   kein horizontales Überlaufen (leistungen) – [390, 390]
+OK   Heute hervorgehoben – DienstagHeute
+09:00–18:00 Uhr
+OK   Status „Jetzt geöffnet/geschlossen“ – Jetzt geschlossen
+OK   Hinweis „Zeiten vorläufig – bitte prüfen“
+OK   Mo + So geschlossen
+OK   kein horizontales Überlaufen (zeiten) – [390, 390]
+OK   Demo-Banner sichtbar
+OK   Team-Auswahl: egal + 5 Namen – ['Egal – erste freie Zeit', 'Giovanni', 'Marco', 'Jenny', 'Julia', 'Anny']
+OK   14 Tage angezeigt – 14
+OK   Mo/So (geschlossen) deaktiviert
+OK   freie Tage vorhanden
+OK   Demo-Termine belegen Zeiten (weniger Slots als theoretisch) – 17 frei von 35, 4 Demo-Termine
+OK   Keine Slot-Überschneidung mit Terminen – []
+OK   Alle Slots innerhalb der Öffnungszeiten (inkl. Dauer) – []
+OK   kein horizontales Überlaufen (slots) – [390, 390]
+OK   Validierung: leere Felder → Fehlermeldung
+OK   Validierung: ungültige Telefonnummer abgelehnt
+OK   Bestätigung mit Zusammenfassung – Wann | Mittwoch, 21. Oktober 2026 | 14:15–14:45 Uhr | Was | Herrenschnitt inkl. Waschen | Bei | Giovanni | Preis | 26 € (Beispielpreis) | Name | Petra Schulz | 
+OK   kein horizontales Überlaufen (bestaetigung) – [390, 390]
+OK   .ics-Download (In Kalender eintragen) – friseurtermin-2026-10-21.ics
+OK   Meine-Termine-Zähler = 1
+OK   Gebuchter Slot verschwindet (und überlappende) – 17 → 14
+OK   Meine Termine listet die Buchung
+OK   kein horizontales Überlaufen (termine) – [390, 390]
+OK   Stornieren in Meine Termine
+OK   Nach Storno ist der Slot wieder frei
+OK   Buchung „egal“ teilt Friseur:in zu – Giovanni
+OK   „Termin stornieren“ auf Bestätigungsseite
+OK   Click-to-call tel:+49211241886
+OK   Google-Maps-Link mit Salon-Query – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath
+OK   Facebook-Link
+OK   Kein WhatsApp-Link
+OK   OSM-iframe mit Marker 51.2219/6.9126 – https://www.openstreetmap.org/export/embed.html?bbox=6.90661%2C51.21833%2C6.91861%2C51.22553&layer=mapnik&marker=51.2219329%2C6.9126149
+OK   OSM-Karte geladen
+OK   kein horizontales Überlaufen (kontakt) – [390, 390]
+OK   Impressum-Platzhalter
+OK   Datenschutz-Platzhalter
+OK   App startet offline (aus SW-Cache)
+OK   Schriften offline geladen
+OK   Karte offline: verständlicher Hinweis, kein iframe – ['Karte offline nicht verfügbar – Adresse oben antippen oder später erneut öffnen.', True]
+OK   Buchung funktioniert offline
+OK   kein horizontales Überlaufen (360px start) – [360, 360]
+OK   kein horizontales Überlaufen (360px leistungen) – [360, 360]
+OK   kein horizontales Überlaufen (360px buchen) – [360, 360]
+OK   kein horizontales Überlaufen (360px zeiten) – [360, 360]
+OK   kein horizontales Überlaufen (360px kontakt) – [360, 360]
+OK   kein horizontales Überlaufen (360px termine) – [360, 360]
+OK   kein horizontales Überlaufen (360px slots) – [360, 360]
+OK   kein horizontales Überlaufen (desktop) – [1280, 1280]
+OK   Keine Konsolenfehler / Seitenfehler / 404 der App – []
+
+Hinweis (fremde Inhalte, OSM-iframe):
+[main] console.error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://www.openstreetmap.org/export/embed.html?bbox=6.90661%2C51.21833%2C6.91861%2C51.22553&layer=mapnik&marker=51.2219329%2C6.9126149

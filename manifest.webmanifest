@@ -1,0 +1,24 @@
+{
+  "name": "Haardesign Da Giovanni",
+  "short_name": "Da Giovanni",
+  "description": "Friseur in Erkrath – Leistungen, Öffnungszeiten, Anfahrt und Online-Termin (Demo).",
+  "lang": "de",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#F6F1EA",
+  "background_color": "#F6F1EA",
+  "categories": ["lifestyle", "beauty"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Termin buchen", "short_name": "Buchen", "url": "./#buchen", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Meine Termine", "short_name": "Termine", "url": "./#termine", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

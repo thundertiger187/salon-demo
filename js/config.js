@@ -1,0 +1,84 @@
+/* =====================================================================
+   SALON-KONFIGURATION – alle Salondaten & Platzhalter stehen NUR hier.
+   Werte in eckigen Klammern / mit PLATZHALTER / VORLÄUFIG markiert ersetzen.
+   Hinweis: Den App-Namen zusätzlich in manifest.webmanifest anpassen
+   (statische Datei, kann diese Konfiguration nicht lesen) – siehe README.
+   ===================================================================== */
+window.SALON_CONFIG = {
+  name: 'Haardesign Da Giovanni',
+  shortName: 'Da Giovanni',          // Name unter dem App-Symbol
+  monogram: 'DG',
+  claim: 'Ihr Friseur in Erkrath',      // Unterzeile im Kopf
+  heroTitle: 'Schöne Haare, <em>ganz entspannt.</em>',
+  heroText: 'Schnitt, Farbe und Styling für Damen, Herren und Kinder – mitten in Erkrath. Termin jetzt auch online buchen, rund um die Uhr.',
+
+  address: {
+    street: 'Bahnstraße 63',
+    zip: '40699',
+    city: 'Erkrath'
+  },
+  phone: '0211 241886',                 // Anzeige
+  phoneTel: '+49211241886',             // für tel:-Links
+  whatsapp: '',                         // WhatsApp-Nummer unbekannt → Link ausgeblendet (z. B. '+49211241886' eintragen)
+  facebook: 'https://www.facebook.com/HaardesignDaGiovanni/',
+  email: '',                            // PLATZHALTER E-Mail (leer = ausgeblendet)
+  owner: '[Inhaber:in Vor- und Nachname]', // PLATZHALTER für Impressum
+  taxId: '[USt-IdNr.]',                 // PLATZHALTER für Impressum
+
+  // Karte: Koordinaten per Nominatim (OSM-Objekt "Da Giovanni", shop=hairdresser, Bahnstraße 63).
+  // Fallback Erkrath-Zentrum: 51.2224 / 6.9080
+  map: { lat: 51.2219329, lon: 6.9126149, zoomDelta: 0.006 },
+  // Suchbegriff für "In Google Maps öffnen" (wird automatisch aus Name + Adresse gebildet, wenn leer)
+  mapsQuery: 'Haardesign Da Giovanni, Bahnstraße 63, 40699 Erkrath',
+
+  // Öffnungszeiten. Laut Google: Di–Fr ab 9:00, Mo/So geschlossen.
+  // VORLÄUFIG: Schlusszeiten und Samstag unbekannt → Platzhalter, bitte prüfen!
+  // 0 = Sonntag … 6 = Samstag. [] = geschlossen. Mehrere Fenster möglich: [['09:00','12:30'],['14:00','18:00']]
+  hours: {
+    0: [],
+    1: [],
+    2: [['09:00', '18:00']],
+    3: [['09:00', '18:00']],
+    4: [['09:00', '18:00']],
+    5: [['09:00', '18:00']],
+    6: [['09:00', '14:00']]
+  },
+  hoursProvisional: true,               // zeigt „Zeiten vorläufig – bitte prüfen“ (auf false setzen, wenn bestätigt)
+  closedDates: [],                      // z. B. ['2026-12-24','2026-12-31'] – Feiertage/Urlaub (JJJJ-MM-TT)
+
+  // Team. role = optionale Unterzeile (leer = keine), days = Arbeitstage (0–6); fehlt = alle Öffnungstage.
+  // Arbeitstage der einzelnen Mitarbeiter:innen sind noch unbekannt → alle arbeiten an allen Öffnungstagen.
+  stylists: [
+    { id: 'giovanni', name: 'Giovanni', role: '', color: '#9C4A30' },
+    { id: 'marco', name: 'Marco', role: '', color: '#4D6385' },
+    { id: 'jenny', name: 'Jenny', role: '', color: '#3F7A55' },
+    { id: 'julia', name: 'Julia', role: '', color: '#A86A12' },
+    { id: 'anny', name: 'Anny', role: '', color: '#7A5A8C' }
+  ],
+
+  // Leistungen & Preise (BEISPIELPREISE). duration in Minuten, from: true = "ab"-Preis
+  priceNote: 'Beispielpreise – die tatsächlichen Preise erfahren Sie im Salon.',
+  services: [
+    { id: 'd-schnitt', cat: 'Damen', name: 'Waschen, Schneiden, Föhnen', duration: 60, price: 49, from: true },
+    { id: 'd-foehnen', cat: 'Damen', name: 'Waschen & Föhnen / Styling', duration: 30, price: 29, from: true },
+    { id: 'd-spitzen', cat: 'Damen', name: 'Spitzen schneiden', duration: 30, price: 25 },
+    { id: 'h-schnitt', cat: 'Herren', name: 'Herrenschnitt inkl. Waschen', duration: 30, price: 26 },
+    { id: 'h-maschine', cat: 'Herren', name: 'Maschinenschnitt', duration: 15, price: 16 },
+    { id: 'h-bart', cat: 'Herren', name: 'Bart trimmen & konturieren', duration: 15, price: 12 },
+    { id: 'k-bis6', cat: 'Kinder', name: 'Kinderschnitt bis 6 Jahre', duration: 15, price: 14 },
+    { id: 'k-bis12', cat: 'Kinder', name: 'Kinderschnitt 7–12 Jahre', duration: 30, price: 19 },
+    { id: 'f-ansatz', cat: 'Farbe', name: 'Ansatzfarbe inkl. Föhnen', duration: 90, price: 59, from: true },
+    { id: 'f-komplett', cat: 'Farbe', name: 'Färben komplett inkl. Schnitt', duration: 120, price: 89, from: true },
+    { id: 'f-straehnen', cat: 'Farbe', name: 'Strähnen / Balayage', duration: 150, price: 109, from: true },
+    { id: 's-hochsteck', cat: 'Styling', name: 'Hochsteckfrisur', duration: 60, price: 45, from: true },
+    { id: 's-pflege', cat: 'Styling', name: 'Pflegekur / Haarbehandlung', duration: 15, price: 12 }
+  ],
+
+  booking: {
+    daysAhead: 14,        // buchbar für die nächsten 14 Tage
+    slotStep: 15,         // Startzeiten-Raster in Minuten
+    leadMinutes: 60,      // frühestens 60 Min. ab jetzt
+    seedDemoBookings: true // belegt in der Demo einige Zeiten mit Beispielterminen
+  },
+  storageKey: 'salon-erkrath-demo-v1'
+};
