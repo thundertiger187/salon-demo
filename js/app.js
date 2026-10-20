@@ -90,7 +90,7 @@
       '<div class="cat-chips">' + CATS.map(function (c) { return '<a class="chip" href="#leistungen" data-cat="' + esc(c) + '">' + esc(c) + '</a>'; }).join('') + '</div>' +
       CATS.map(function (c) {
         return '<div class="price-cat" id="cat-' + esc(c) + '"><h2>' + esc(c) + '</h2>' + C.services.filter(function (s) { return s.cat === c; }).map(function (s) {
-          return '<div class="price-row"><span class="n"><b>' + esc(s.name) + '</b><span>ca. ' + S.durTxt(s.duration) + '</span></span><span class="p">' + price(s) + '</span></div>';
+          return '<div class="price-row"><span class="n"><b>' + esc(s.name) + '</b><span>' + S.durTxt(s.duration) + '</span></span><span class="p">' + price(s) + '</span></div>';
         }).join('') + '</div>';
       }).join('') +
       '<p class="small muted center">Alle Preise sind Beispielpreise inkl. MwSt. und dienen nur der Demo.</p>' +

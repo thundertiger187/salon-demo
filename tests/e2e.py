@@ -110,6 +110,8 @@ def main():
             shot(page, 'bewertungen.png'); page.evaluate('window.scrollTo(0,0)')
             page.click('a[data-nav=leistungen]'); page.wait_for_selector('#v-leistungen.active .price-row')
             check('„Beispielpreise“ sichtbar in Leistungen', page.locator('#v-leistungen .badge.sample').is_visible())
+            lt = page.inner_text('#v-leistungen')
+            check('Dauer-Anzeige „ca. …“ (30 Min., 1 Std., 1,5 Std., 3 Std.)', all(x in lt for x in ['ca. 30 Min.', 'ca. 1 Std.', 'ca. 1,5 Std.', 'ca. 3 Std.']) and 'ca. ca.' not in lt)
             check('Kategorien Damen/Herren/Kinder/Farbe', all(page.locator(f'#v-leistungen h2:text-is("{c}")').count() == 1 for c in ['Damen', 'Herren', 'Kinder', 'Farbe']))
             no_overflow(page, 'leistungen'); shot(page, 'leistungen.png')
             page.click('a[data-nav=zeiten]'); page.wait_for_selector('#v-zeiten.active .hours-row')
@@ -142,14 +144,33 @@ def main():
             times = page.eval_on_selector_all('#v-buchen .time', 'els => els.map(e => +e.dataset.time)')
             v = page.evaluate("""([day, times]) => { const st = JSON.parse(localStorage.getItem(SALON_CONFIG.storageKey));
                 const bk = st.bookings.filter(b => b.staffId==='giovanni' && b.date===day && b.status!=='cancelled');
-                const iv = SB.intervals(day); const dur = SB.service('h-schnitt').duration; const step = SALON_CONFIG.booking.slotStep;
-                let possible = 0; iv.forEach(i => { for (let t=i[0]; t+dur<=i[1]; t+=step) possible++; });
+                const iv = SB.intervals(day); const dur = SB.service('h-schnitt').duration; const step = SB.stepFor(SB.service('h-schnitt'));
+                let possible = 0; iv.forEach(i => { for (let t=Math.ceil(i[0]/step)*step; t+dur<=i[1]; t+=step) possible++; });
                 const clash = times.filter(t => bk.some(b => b.start < t+dur && t < b.start+b.duration));
                 const outside = times.filter(t => !iv.some(i => t>=i[0] && t+dur<=i[1]));
                 return {demo: bk.length, possible, clash, outside}; }""", [day, times])
             check('Demo-Termine belegen Zeiten (weniger Slots als theoretisch)', v['demo'] > 0 and len(times) < v['possible'], f"{len(times)} frei von {v['possible']}, {v['demo']} Demo-Termine")
             check('Keine Slot-Überschneidung mit Terminen', v['clash'] == [], v['clash'])
             check('Alle Slots innerhalb der Öffnungszeiten (inkl. Dauer)', v['outside'] == [], v['outside'])
+            check('Herrenschnitt (UI): alle Startzeiten auf :00/:30', times and all(t % 30 == 0 for t in times), [f'{t//60:02d}:{t%60:02d}' for t in times])
+            g = page.evaluate("""() => { const st = SB.seed(SB.load()), today = SB.todayISO(), out = {hs: [], q: 0, demoOff: 0, sat: [], satEmpty: null, dur: {}};
+                for (let i = 0; i < SALON_CONFIG.booking.daysAhead; i++) { const d = SB.addDays(today, i);
+                  SB.freeSlots(st, d, 'h-schnitt', null).forEach(x => { if (x.start % 30) out.hs.push(d + ' ' + SB.fmtTime(x.start)); });
+                  ['h-maschine','h-bart','k-bis6','s-pflege'].forEach(id => SB.freeSlots(st, d, id, null).forEach(x => { if (x.start % 30 === 15) out.q++; }));
+                  if (SB.weekday(d) === 6) { const f = SB.freeSlots(st, d, 'f-straehnen', null); out.sat.push(f.length ? f[f.length-1].start : null);
+                    if (out.satEmpty === null) { const e = SB.freeSlots({bookings: []}, d, 'f-straehnen', null); out.satEmpty = e.map(x => SB.fmtTime(x.start)); } } }
+                out.demoOff = st.bookings.filter(b => b.demo && b.duration >= 30 && b.start % 30).length;
+                SALON_CONFIG.services.forEach(s => out.dur[s.name] = [s.duration, SB.durTxt(s.duration), SB.stepFor(s)]);
+                // Ende jeder Startzeit vor Ladenschluss (alle Leistungen, alle Tage)
+                out.late = []; for (let i = 0; i < 14; i++) { const d = SB.addDays(today, i), iv = SB.intervals(d);
+                  SALON_CONFIG.services.forEach(s => SB.freeSlots(st, d, s.id, null).forEach(x => { if (!iv.some(v => x.start >= v[0] && x.start + s.duration <= v[1])) out.late.push(s.id + ' ' + d + ' ' + SB.fmtTime(x.start)); })); }
+                return out; }""")
+            check('Herrenschnitt (14 Tage): nie :15/:45', g['hs'] == [], g['hs'][:5])
+            check('15-Min.-Leistungen: :15/:45 werden angeboten', g['q'] > 0, f"{g['q']} Startzeiten auf :15/:45")
+            check('Demo-Termine ≥ 30 Min. liegen auf :00/:30', g['demoOff'] == 0, g['demoOff'])
+            check('Balayage Samstag: letzte Startzeit ≤ 10:00 (Schluss 13:00)', all(x is None or x <= 600 for x in g['sat']) and g['satEmpty'] and g['satEmpty'][-1] == '10:00', f"leerer Sa: {g['satEmpty']}; mit Demo-Terminen letzte: {[None if x is None else f'{x//60:02d}:{x%60:02d}' for x in g['sat']]}")
+            check('Alle Startzeiten enden vor Ladenschluss', g['late'] == [], g['late'][:5])
+            print('     Dauer-Tabelle:', '; '.join(f"{k}: {v[1]} (Raster {v[2]})" for k, v in g['dur'].items()))
             pick = times[len(times) // 2]
             page.click(f'#v-buchen .time[data-time="{pick}"]'); page.wait_for_selector('#time-next')
             no_overflow(page, 'slots'); shot(page, 'buchung-slots.png')

@@ -68,7 +68,10 @@ window.SALON_CONFIG = {
     { id: 'anny', name: 'Anny', role: '', color: '#7A5A8C' }
   ],
 
-  // Leistungen & Preise (BEISPIELPREISE). duration in Minuten, from: true = "ab"-Preis
+  // Leistungen & Preise (BEISPIELPREISE). duration in Minuten (Vielfache von 15), from: true = "ab"-Preis.
+  // Startzeiten-Raster pro Leistung: optional step (Minuten). Ohne step gilt:
+  //   Dauer <= 15 Min. → alle 15 Min. (:00/:15/:30/:45) · Dauer >= 30 Min. → alle 30 Min. (nur :00/:30)
+  // Beispiel für Abweichung: { …, duration: 60, step: 60 } → nur volle Stunden.
   priceNote: 'Beispielpreise – die tatsächlichen Preise erfahren Sie im Salon.',
   services: [
     { id: 'd-schnitt', cat: 'Damen', name: 'Waschen, Schneiden, Föhnen', duration: 60, price: 49, from: true },
@@ -81,16 +84,16 @@ window.SALON_CONFIG = {
     { id: 'k-bis12', cat: 'Kinder', name: 'Kinderschnitt 7–12 Jahre', duration: 30, price: 19 },
     { id: 'f-ansatz', cat: 'Farbe', name: 'Ansatzfarbe inkl. Föhnen', duration: 90, price: 59, from: true },
     { id: 'f-komplett', cat: 'Farbe', name: 'Färben komplett inkl. Schnitt', duration: 120, price: 89, from: true },
-    { id: 'f-straehnen', cat: 'Farbe', name: 'Strähnen / Balayage', duration: 150, price: 109, from: true },
+    { id: 'f-straehnen', cat: 'Farbe', name: 'Strähnen / Balayage', duration: 180, price: 109, from: true },
     { id: 's-hochsteck', cat: 'Styling', name: 'Hochsteckfrisur', duration: 60, price: 45, from: true },
     { id: 's-pflege', cat: 'Styling', name: 'Pflegekur / Haarbehandlung', duration: 15, price: 12 }
   ],
 
   booking: {
     daysAhead: 14,        // buchbar für die nächsten 14 Tage
-    slotStep: 15,         // Startzeiten-Raster in Minuten
+    // Startzeiten-Raster: pro Leistung (services[].step bzw. Standardregel oben), letzte Startzeit so, dass die Leistung bis Ladenschluss fertig ist
     leadMinutes: 60,      // frühestens 60 Min. ab jetzt
     seedDemoBookings: true // belegt in der Demo einige Zeiten mit Beispielterminen
   },
-  storageKey: 'salon-erkrath-demo-v1'
+  storageKey: 'salon-erkrath-demo-v2'   // v2: neues Startzeiten-Raster → Demo-Termine werden neu erzeugt
 };

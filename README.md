@@ -22,13 +22,28 @@ Meine Termine, Impressum/Datenschutz (Platzhalter). Funktioniert nach dem ersten
 | Team | `stylists` (Name, Arbeitstage `days`) – aktuell Platzhalter `[Friseur:in 1/2]` |
 | Leistungen & Preise | `services` (Kategorie, Dauer in Min., Preis, `from: true` = „ab“) und `priceNote` |
 | Impressum | `owner`, `taxId` (+ Texte in `js/app.js` → `rLegal`) |
-| Buchung | `booking.daysAhead` (14), `slotStep` (15 Min.), `leadMinutes` (60), `seedDemoBookings` |
+| Buchung | `booking.daysAhead` (14), `leadMinutes` (60), `seedDemoBookings` |
+| Startzeiten-Raster | pro Leistung `step` (optional). Standard: Dauer ≤ 15 Min. → alle 15 Min.; ≥ 30 Min. → nur :00/:30. Letzte Startzeit = Leistung endet spätestens bei Ladenschluss. Demo-Termine liegen im selben Raster. |
 
 **Zusätzlich (statische Dateien, können config.js nicht lesen):**
 - `manifest.webmanifest`: `name`, `short_name`
 - `index.html`: `<title>`, `apple-mobile-web-app-title` (Rest wird zur Laufzeit aus config.js gesetzt)
 - Icons neu erzeugen: Monogramm in `tools/make_icons.py` (`MONO = 'DG'`) ändern → `python3 tools/make_icons.py` (Pillow)
 - **Nach jeder Änderung** in `sw.js` die `VERSION` erhöhen (z. B. `'v2'`), sonst zeigen installierte Apps die alte Fassung aus dem Cache.
+
+## Dauern & Raster (Stand v3)
+| Leistung | Dauer | Startzeiten |
+|---|---|---|
+| Damen: Waschen, Schneiden, Föhnen | ca. 1 Std. | :00/:30 |
+| Damen: Waschen & Föhnen / Styling · Spitzen schneiden | ca. 30 Min. | :00/:30 |
+| Herren: Herrenschnitt inkl. Waschen | ca. 30 Min. | :00/:30 |
+| Herren: Maschinenschnitt · Bart | ca. 15 Min. | alle 15 Min. |
+| Kinder bis 6 J. / 7–12 J. | ca. 15 Min. / ca. 30 Min. | alle 15 Min. / :00/:30 |
+| Ansatzfarbe inkl. Föhnen | ca. 1,5 Std. | :00/:30 |
+| Färben komplett inkl. Schnitt | ca. 2 Std. | :00/:30 |
+| Strähnen / Balayage | ca. 3 Std. | :00/:30 (Sa letzte Startzeit 10:00) |
+| Hochsteckfrisur | ca. 1 Std. | :00/:30 |
+| Pflegekur | ca. 15 Min. | alle 15 Min. |
 
 ## Google-Bewertungen
 - Links in `js/config.js` → `reviews`: Place ID `ChIJnxzAeNTNuEcRSB6MdPd67FY` (aus Google Maps ermittelt, ohne API-Schlüssel;

@@ -1,4 +1,4 @@
-E2E 2026-10-20 23:15 – 81/81 bestanden – http://localhost:8765/salon-demo/
+E2E 2026-10-20 23:18 – 88/88 bestanden – http://localhost:8765/salon-demo/
 OK   Startseite lädt unter Unterpfad
 OK   Service Worker registriert, Scope = Unterpfad – http://localhost:8765/salon-demo/
 OK   Service Worker kontrolliert die Seite – http://localhost:8765/salon-demo/sw.js
@@ -23,6 +23,7 @@ OK   „Bewertung schreiben“ → writereview?placeid
 OK   „Alle Bewertungen auf Google lesen“ → reviews?placeid
 OK   Keine erfundenen Rezensionstexte
 OK   „Beispielpreise“ sichtbar in Leistungen
+OK   Dauer-Anzeige „ca. …“ (30 Min., 1 Std., 1,5 Std., 3 Std.)
 OK   Kategorien Damen/Herren/Kinder/Farbe
 OK   kein horizontales Überlaufen (leistungen) – [390, 390]
 OK   Heute hervorgehoben – DienstagHeute
@@ -37,23 +38,29 @@ OK   Team-Auswahl: egal + 5 Namen – ['Egal – erste freie Zeit', 'Giovanni', 
 OK   14 Tage angezeigt – 14
 OK   Mo/So (geschlossen) deaktiviert
 OK   freie Tage vorhanden
-OK   Demo-Termine belegen Zeiten (weniger Slots als theoretisch) – 17 frei von 35, 4 Demo-Termine
+OK   Demo-Termine belegen Zeiten (weniger Slots als theoretisch) – 11 frei von 18, 4 Demo-Termine
 OK   Keine Slot-Überschneidung mit Terminen – []
 OK   Alle Slots innerhalb der Öffnungszeiten (inkl. Dauer) – []
+OK   Herrenschnitt (UI): alle Startzeiten auf :00/:30 – ['09:00', '09:30', '10:00', '11:00', '12:00', '14:00', '14:30', '15:00', '15:30', '17:00', '17:30']
+OK   Herrenschnitt (14 Tage): nie :15/:45 – []
+OK   15-Min.-Leistungen: :15/:45 werden angeboten – 600 Startzeiten auf :15/:45
+OK   Demo-Termine ≥ 30 Min. liegen auf :00/:30 – 0
+OK   Balayage Samstag: letzte Startzeit ≤ 10:00 (Schluss 13:00) – leerer Sa: ['08:30', '09:00', '09:30', '10:00']; mit Demo-Terminen letzte: ['10:00', None]
+OK   Alle Startzeiten enden vor Ladenschluss – []
 OK   kein horizontales Überlaufen (slots) – [390, 390]
 OK   Validierung: leere Felder → Fehlermeldung
 OK   Validierung: ungültige Telefonnummer abgelehnt
 OK   Bewertungs-Bitte auf Bestätigungsseite
-OK   Bestätigung mit Zusammenfassung – Wann | Mittwoch, 21. Oktober 2026 | 14:15–14:45 Uhr | Was | Herrenschnitt inkl. Waschen | Bei | Giovanni | Preis | 26 € (Beispielpreis) | Name | Petra Schulz | 
+OK   Bestätigung mit Zusammenfassung – Wann | Mittwoch, 21. Oktober 2026 | 14:00–14:30 Uhr | Was | Herrenschnitt inkl. Waschen | Bei | Giovanni | Preis | 26 € (Beispielpreis) | Name | Petra Schulz | 
 OK   kein horizontales Überlaufen (bestaetigung) – [390, 390]
 OK   .ics-Download (In Kalender eintragen) – friseurtermin-2026-10-21.ics
 OK   Meine-Termine-Zähler = 1
-OK   Gebuchter Slot verschwindet (und überlappende) – 17 → 14
+OK   Gebuchter Slot verschwindet (und überlappende) – 11 → 10
 OK   Meine Termine listet die Buchung
 OK   kein horizontales Überlaufen (termine) – [390, 390]
 OK   Stornieren in Meine Termine
 OK   Nach Storno ist der Slot wieder frei
-OK   Buchung „egal“ teilt Friseur:in zu – Giovanni
+OK   Buchung „egal“ teilt Friseur:in zu – Marco
 OK   „Termin stornieren“ auf Bestätigungsseite
 OK   Click-to-call tel:+49211241886
 OK   Google-Maps-Link mit Salon-Query – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY

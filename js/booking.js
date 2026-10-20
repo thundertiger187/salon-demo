@@ -26,7 +26,15 @@
   }
   function dateTime(iso, min) { var d = fromISO(iso); d.setMinutes(min); return d; }
   function minutesNow(now) { now = now || new Date(); return now.getHours() * 60 + now.getMinutes(); }
-  function durTxt(m) { var h = Math.floor(m / 60), r = m % 60; return h ? h + ' Std.' + (r ? ' ' + r + ' Min.' : '') : m + ' Min.'; }
+  /* Dauer-Text: ca. 30 Min. · ca. 1 Std. · ca. 1,5 Std. · ca. 2 Std. 15 Min. */
+  function durTxt(m) {
+    if (m < 60) return 'ca. ' + m + ' Min.';
+    if (m % 30 === 0) return 'ca. ' + String(m / 60).replace('.', ',') + ' Std.';
+    return 'ca. ' + Math.floor(m / 60) + ' Std. ' + (m % 60) + ' Min.';
+  }
+  /* Startzeiten-Raster einer Leistung: services[].step, sonst <=15 Min. → 15, sonst 30 (:00/:30) */
+  function stepFor(sv) { return sv.step || (sv.duration <= 15 ? 15 : 30); }
+  function firstOnGrid(t, step) { return Math.ceil(t / step) * step; }
   function euro(v) { return v.toLocaleString('de-DE', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €'; }
   function uid() { return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -65,7 +73,7 @@
   function seed(s, now) {
     if (!C.booking.seedDemoBookings) return s;
     var today = todayISO(now), changed = false;
-    var durs = C.services.map(function (x) { return x.duration; }).filter(function (d) { return d <= 90; });
+    var pool = C.services.filter(function (x) { return x.duration <= 90; });
     for (var i = 0; i <= C.booking.daysAhead; i++) {
       var iso = addDays(today, i);
       if (s.seededDays.indexOf(iso) >= 0) continue;
@@ -76,9 +84,10 @@
         intervals(iso).forEach(function (iv) {
           var t = iv[0];
           while (t < iv[1]) {
-            var dur = durs[Math.floor(r() * durs.length)];
-            if (r() < 0.5 && t + dur <= iv[1]) {
-              s.bookings.push({ id: 'demo-' + iso + '-' + st.id + '-' + t, demo: true, serviceId: null, staffId: st.id, date: iso, start: t, duration: dur, status: 'ok' });
+            var sv = pool[Math.floor(r() * pool.length)], dur = sv.duration;
+            // Demo-Termine liegen im selben Raster wie die Online-Startzeiten (>= 30 Min. nur :00/:30)
+            if (r() < 0.5 && t % stepFor(sv) === 0 && t + dur <= iv[1]) {
+              s.bookings.push({ id: 'demo-' + iso + '-' + st.id + '-' + t, demo: true, serviceId: sv.id, staffId: st.id, date: iso, start: t, duration: dur, status: 'ok' });
               t += dur;
             } else t += 15 * (1 + Math.floor(r() * 4));
           }
@@ -106,8 +115,8 @@
     var earliest = iso === today ? minutesNow(now) + C.booking.leadMinutes : 0;
     var team = C.stylists.filter(function (st) { return (!staffId || st.id === staffId) && worksOn(st, iso); });
     intervals(iso).forEach(function (iv) {
-      for (var t = iv[0]; t + sv.duration <= iv[1]; t += C.booking.slotStep) {
-        if (t < earliest) continue;
+      var step = stepFor(sv);
+      for (var t = firstOnGrid(Math.max(iv[0], earliest), step); t + sv.duration <= iv[1]; t += step) {
         var ids = team.filter(function (st) { return !busy(s, st.id, iso, t, sv.duration); }).map(function (st) { return st.id; });
         if (ids.length) out.push({ start: t, staffIds: ids });
       }
@@ -172,7 +181,7 @@
   }
 
   root.SB = { WD: WD, WD_SHORT: WD_SHORT, MONTHS: MONTHS, pad: pad, toISO: toISO, fromISO: fromISO, todayISO: todayISO, addDays: addDays, weekday: weekday, hm: hm,
-    fmtTime: fmtTime, fmtTimeShort: fmtTimeShort, fmtDate: fmtDate, dateTime: dateTime, durTxt: durTxt, euro: euro, service: service, stylist: stylist, intervals: intervals, isOpenDay: isOpenDay,
+    fmtTime: fmtTime, fmtTimeShort: fmtTimeShort, fmtDate: fmtDate, dateTime: dateTime, durTxt: durTxt, stepFor: stepFor, euro: euro, service: service, stylist: stylist, intervals: intervals, isOpenDay: isOpenDay,
     worksOn: worksOn, openState: openState, load: load, save: save, seed: seed, freeSlots: freeSlots, nextFree: nextFree, validName: validName, validPhone: validPhone,
     book: book, cancel: cancel, get: get, mine: mine, pastMine: pastMine, ics: ics };
 })(window);
