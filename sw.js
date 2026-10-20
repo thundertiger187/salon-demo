@@ -1,6 +1,6 @@
 /* Service Worker – Cache-first für alle eigenen Dateien (offline-fähig).
    Bei Änderungen an Dateien VERSION erhöhen, damit Geräte die neue Fassung laden. */
-var VERSION = 'v1';
+var VERSION = 'v2';
 var CACHE = 'salon-pwa-' + VERSION;
 var ASSETS = [
   './',

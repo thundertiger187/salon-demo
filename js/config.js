@@ -31,8 +31,7 @@ window.SALON_CONFIG = {
   // Suchbegriff für "In Google Maps öffnen" (wird automatisch aus Name + Adresse gebildet, wenn leer)
   mapsQuery: 'Haardesign Da Giovanni, Bahnstraße 63, 40699 Erkrath',
 
-  // Öffnungszeiten. Laut Google: Di–Fr ab 9:00, Mo/So geschlossen.
-  // VORLÄUFIG: Schlusszeiten und Samstag unbekannt → Platzhalter, bitte prüfen!
+  // Öffnungszeiten laut Google-/Branchenbucheinträgen (Stand 20.10.2026).
   // 0 = Sonntag … 6 = Samstag. [] = geschlossen. Mehrere Fenster möglich: [['09:00','12:30'],['14:00','18:00']]
   hours: {
     0: [],
@@ -40,10 +39,10 @@ window.SALON_CONFIG = {
     2: [['09:00', '18:00']],
     3: [['09:00', '18:00']],
     4: [['09:00', '18:00']],
-    5: [['09:00', '18:00']],
-    6: [['09:00', '14:00']]
+    5: [['09:00', '20:00']],
+    6: [['08:30', '13:00']]
   },
-  hoursProvisional: true,               // zeigt „Zeiten vorläufig – bitte prüfen“ (auf false setzen, wenn bestätigt)
+  hoursProvisional: false,               // zeigt „Zeiten vorläufig – bitte prüfen“ (auf false setzen, wenn bestätigt)
   closedDates: [],                      // z. B. ['2026-12-24','2026-12-31'] – Feiertage/Urlaub (JJJJ-MM-TT)
 
   // Team. role = optionale Unterzeile (leer = keine), days = Arbeitstage (0–6); fehlt = alle Öffnungstage.
