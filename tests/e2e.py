@@ -98,6 +98,16 @@ def main():
             check('Hero-Buttons Termin buchen + Anrufen', page.locator('#cta-book').is_visible() and page.get_attribute('#cta-call', 'href') == 'tel:+49211241886')
             check('Name im Kopf aus Konfiguration', page.inner_text('.brand-name') == 'Haardesign Da Giovanni')
             no_overflow(page, 'start'); shot(page, 'start.png')
+            print('\n== Google-Bewertungen ==')
+            rv = page.locator('#rev-start')
+            check('Bewertungs-Karte unter dem Hero', rv.is_visible() and page.evaluate("document.querySelector('.hero').nextElementSibling.id") == 'rev-start')
+            rt = rv.inner_text()
+            check('Sterne + 4,9 + 97 Bewertungen + Stand', '4,9' in rt and '97 Bewertungen auf Google' in rt and 'Stand: Oktober 2026' in rt and page.locator('#rev-start .stars[aria-label="4,9 von 5 Sternen"]').count() == 1, rt.replace('\n', ' | '))
+            check('„Bewertung schreiben“ → writereview?placeid', page.get_attribute('#rev-start [data-review=write]', 'href') == 'https://search.google.com/local/writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY' and page.get_attribute('#rev-start [data-review=write]', 'target') == '_blank' and 'Bewertung schreiben' in page.inner_text('#rev-start [data-review=write]'))
+            check('„Alle Bewertungen auf Google lesen“ → reviews?placeid', page.get_attribute('#rev-start [data-review=read]', 'href') == 'https://search.google.com/local/reviews?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY')
+            check('Keine erfundenen Rezensionstexte', page.locator('blockquote, .review-text').count() == 0)
+            page.evaluate("document.getElementById('rev-start').scrollIntoView({block: 'start'}); window.scrollBy(0, -80)")
+            shot(page, 'bewertungen.png'); page.evaluate('window.scrollTo(0,0)')
             page.click('a[data-nav=leistungen]'); page.wait_for_selector('#v-leistungen.active .price-row')
             check('„Beispielpreise“ sichtbar in Leistungen', page.locator('#v-leistungen .badge.sample').is_visible())
             check('Kategorien Damen/Herren/Kinder/Farbe', all(page.locator(f'#v-leistungen h2:text-is("{c}")').count() == 1 for c in ['Damen', 'Herren', 'Kinder', 'Farbe']))
@@ -106,7 +116,10 @@ def main():
             check('Heute hervorgehoben', page.locator('.hours-row.today').count() == 1, page.inner_text('.hours-row.today'))
             st = page.inner_text('#open-status .status')
             check('Status „Jetzt geöffnet/geschlossen“', st in ('Jetzt geöffnet', 'Jetzt geschlossen'), st)
-            check('Hinweis „Zeiten vorläufig – bitte prüfen“', 'Zeiten vorläufig – bitte prüfen' in page.inner_text('#v-zeiten'))
+            prov = page.evaluate('!!SALON_CONFIG.hoursProvisional')
+            check('Hinweis „Zeiten vorläufig“ genau dann, wenn hoursProvisional', ('Zeiten vorläufig – bitte prüfen' in page.inner_text('#v-zeiten')) == prov, f'hoursProvisional={prov}')
+            ht = page.inner_text('#v-zeiten .hours')
+            check('Echte Zeiten: Di–Do 9–18, Fr 9–20, Sa 8:30–13', ht.count('09:00–18:00 Uhr') == 3 and 'Freitag\t09:00–20:00' in ht.replace('\n', '\t').replace('Heute', '').replace('\t\t', '\t') or ('09:00–20:00 Uhr' in ht and '08:30–13:00 Uhr' in ht and ht.count('09:00–18:00 Uhr') == 3), ht.replace('\n', ' | '))
             check('Mo + So geschlossen', page.locator('.hours-row.closed-day').count() == 2)
             no_overflow(page, 'zeiten'); shot(page, 'zeiten.png')
 
@@ -150,6 +163,7 @@ def main():
             page.click('#book-now'); page.wait_for_selector('#confirm-summary')
             summ = page.inner_text('#confirm-summary')
             hh = f'{pick // 60:02d}:{pick % 60:02d}'
+            check('Bewertungs-Bitte auf Bestätigungsseite', page.locator('#rev-done').is_visible() and 'Zufrieden? Bewerte uns auf Google' in page.inner_text('#rev-done') and page.get_attribute('#rev-done a', 'href') == 'https://search.google.com/local/writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY')
             check('Bestätigung mit Zusammenfassung', 'Herrenschnitt' in summ and hh in summ and 'Petra Schulz' in summ and 'Bahnstraße 63' in summ, summ.replace('\n', ' | ')[:160])
             no_overflow(page, 'bestaetigung'); shot(page, 'bestaetigung.png')
             with page.expect_download() as dl:
@@ -185,7 +199,10 @@ def main():
             page.click('a[data-nav=kontakt]'); page.wait_for_selector('#v-kontakt.active #map-box')
             check('Click-to-call tel:+49211241886', page.get_attribute('#k-call', 'href') == 'tel:+49211241886')
             g = page.get_attribute('#gmaps', 'href')
-            check('Google-Maps-Link mit Salon-Query', g == 'https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath', g)
+            check('Google-Maps-Link mit Salon-Query', g.startswith('https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath'), g)
+            check('Bewertungs-Karte in Kontakt', page.get_attribute('#rev-kontakt [data-review=write]', 'href') == 'https://search.google.com/local/writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY')
+            mh = page.get_attribute('#gmaps', 'href')
+            check('Google-Maps-Link mit query_place_id', mh.endswith('&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY'), mh)
             check('Facebook-Link', page.get_attribute('#k-fb', 'href') == 'https://www.facebook.com/HaardesignDaGiovanni/')
             check('Kein WhatsApp-Link', page.locator('a[href*="wa.me"]').count() == 0)
             src = page.get_attribute('#map-box iframe', 'src')
@@ -198,6 +215,13 @@ def main():
             check('Impressum-Platzhalter', 'Platzhalter' in page.inner_text('#v-impressum'))
             page.goto(BASE + '#datenschutz'); page.wait_for_selector('#v-datenschutz.active h1')
             check('Datenschutz-Platzhalter', 'Platzhalter' in page.inner_text('#v-datenschutz'))
+            # Vergangener Termin → Bewertungs-Bitte in „Meine Termine“
+            page.evaluate("""() => { const k = SALON_CONFIG.storageKey, st = JSON.parse(localStorage.getItem(k));
+                st.bookings.push({ id: 'past-test', mine: true, serviceId: 'h-schnitt', staffId: 'marco', date: SB.addDays(SB.todayISO(), -3), start: 600, duration: 30, price: 26, name: 'Petra Schulz', phone: '0171 2345678', status: 'ok' });
+                localStorage.setItem(k, JSON.stringify(st)); }""")
+            page.goto(BASE + '#start'); page.goto(BASE + '#termine'); page.wait_for_selector('#v-termine.active')
+            check('Vergangene Termine + Bewertungs-Bitte', page.locator('[data-past="past-test"]').count() == 1 and page.locator('#rev-past').is_visible() and page.get_attribute('#rev-past a', 'href') == 'https://search.google.com/local/writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY')
+            no_overflow(page, 'termine vergangen'); shot(page, 'meine-termine-vergangen.png')
 
             print('\n== Offline ==')
             ctx.set_offline(True)

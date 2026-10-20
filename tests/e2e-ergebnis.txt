@@ -1,8 +1,8 @@
-E2E 2026-10-20 22:57 – 70/70 bestanden – http://localhost:8765/salon-demo/
+E2E 2026-10-20 23:15 – 81/81 bestanden – http://localhost:8765/salon-demo/
 OK   Startseite lädt unter Unterpfad
 OK   Service Worker registriert, Scope = Unterpfad – http://localhost:8765/salon-demo/
 OK   Service Worker kontrolliert die Seite – http://localhost:8765/salon-demo/sw.js
-OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v1'], 'n': 19}
+OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v3'], 'n': 19}
 OK   Manifest Content-Type – application/manifest+json
 OK   Manifest Felder (name/short_name/display/start_url/scope/Farben) – {'name': 'Haardesign Da Giovanni', 'short_name': 'Da Giovanni', 'start_url': './', 'scope': './', 'display': 'standalone'}
 OK   Icon lädt icons/icon-192.png (any) – 192x192
@@ -17,13 +17,19 @@ OK   „App installieren“ nur bei beforeinstallprompt sichtbar – beforeinsta
 OK   Hero-Buttons Termin buchen + Anrufen
 OK   Name im Kopf aus Konfiguration
 OK   kein horizontales Überlaufen (start) – [390, 390]
+OK   Bewertungs-Karte unter dem Hero
+OK   Sterne + 4,9 + 97 Bewertungen + Stand – GOOGLE-BEWERTUNGEN | Stand: Oktober 2026 | 4,9 | 97 Bewertungen auf Google | Bewertung schreiben | Alle Bewertungen auf Google lesen
+OK   „Bewertung schreiben“ → writereview?placeid
+OK   „Alle Bewertungen auf Google lesen“ → reviews?placeid
+OK   Keine erfundenen Rezensionstexte
 OK   „Beispielpreise“ sichtbar in Leistungen
 OK   Kategorien Damen/Herren/Kinder/Farbe
 OK   kein horizontales Überlaufen (leistungen) – [390, 390]
 OK   Heute hervorgehoben – DienstagHeute
 09:00–18:00 Uhr
 OK   Status „Jetzt geöffnet/geschlossen“ – Jetzt geschlossen
-OK   Hinweis „Zeiten vorläufig – bitte prüfen“
+OK   Hinweis „Zeiten vorläufig“ genau dann, wenn hoursProvisional – hoursProvisional=False
+OK   Echte Zeiten: Di–Do 9–18, Fr 9–20, Sa 8:30–13 – Montag | geschlossen | DienstagHeute | 09:00–18:00 Uhr | Mittwoch | 09:00–18:00 Uhr | Donnerstag | 09:00–18:00 Uhr | Freitag | 09:00–20:00 Uhr | Samstag | 08:30–13:00 Uhr | Sonntag | geschlossen
 OK   Mo + So geschlossen
 OK   kein horizontales Überlaufen (zeiten) – [390, 390]
 OK   Demo-Banner sichtbar
@@ -37,6 +43,7 @@ OK   Alle Slots innerhalb der Öffnungszeiten (inkl. Dauer) – []
 OK   kein horizontales Überlaufen (slots) – [390, 390]
 OK   Validierung: leere Felder → Fehlermeldung
 OK   Validierung: ungültige Telefonnummer abgelehnt
+OK   Bewertungs-Bitte auf Bestätigungsseite
 OK   Bestätigung mit Zusammenfassung – Wann | Mittwoch, 21. Oktober 2026 | 14:15–14:45 Uhr | Was | Herrenschnitt inkl. Waschen | Bei | Giovanni | Preis | 26 € (Beispielpreis) | Name | Petra Schulz | 
 OK   kein horizontales Überlaufen (bestaetigung) – [390, 390]
 OK   .ics-Download (In Kalender eintragen) – friseurtermin-2026-10-21.ics
@@ -49,7 +56,9 @@ OK   Nach Storno ist der Slot wieder frei
 OK   Buchung „egal“ teilt Friseur:in zu – Giovanni
 OK   „Termin stornieren“ auf Bestätigungsseite
 OK   Click-to-call tel:+49211241886
-OK   Google-Maps-Link mit Salon-Query – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath
+OK   Google-Maps-Link mit Salon-Query – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY
+OK   Bewertungs-Karte in Kontakt
+OK   Google-Maps-Link mit query_place_id – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY
 OK   Facebook-Link
 OK   Kein WhatsApp-Link
 OK   OSM-iframe mit Marker 51.2219/6.9126 – https://www.openstreetmap.org/export/embed.html?bbox=6.90661%2C51.21833%2C6.91861%2C51.22553&layer=mapnik&marker=51.2219329%2C6.9126149
@@ -57,6 +66,8 @@ OK   OSM-Karte geladen
 OK   kein horizontales Überlaufen (kontakt) – [390, 390]
 OK   Impressum-Platzhalter
 OK   Datenschutz-Platzhalter
+OK   Vergangene Termine + Bewertungs-Bitte
+OK   kein horizontales Überlaufen (termine vergangen) – [390, 390]
 OK   App startet offline (aus SW-Cache)
 OK   Schriften offline geladen
 OK   Karte offline: verständlicher Hinweis, kein iframe – ['Karte offline nicht verfügbar – Adresse oben antippen oder später erneut öffnen.', True]

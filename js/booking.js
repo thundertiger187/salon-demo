@@ -148,6 +148,13 @@
       .sort(function (a, b) { return (a.date + pad(a.start)) < (b.date + pad(b.start)) ? -1 : 1; });
   }
 
+  /* Vergangene eigene Termine (für die Bewertungs-Bitte), neueste zuerst */
+  function pastMine(now, days) {
+    now = now || new Date(); var limit = addDays(todayISO(now), -(days || 90));
+    return load().bookings.filter(function (b) { return b.mine && b.status !== 'cancelled' && dateTime(b.date, b.start + b.duration) <= now && b.date >= limit; })
+      .sort(function (a, b) { return (a.date + pad(a.start)) > (b.date + pad(b.start)) ? -1 : 1; });
+  }
+
   /* Kalenderdatei (.ics) – Zeiten in UTC, damit jede Kalender-App korrekt umrechnet */
   function icsEsc(t) { return String(t).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1'); }
   function icsUtc(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
@@ -167,5 +174,5 @@
   root.SB = { WD: WD, WD_SHORT: WD_SHORT, MONTHS: MONTHS, pad: pad, toISO: toISO, fromISO: fromISO, todayISO: todayISO, addDays: addDays, weekday: weekday, hm: hm,
     fmtTime: fmtTime, fmtTimeShort: fmtTimeShort, fmtDate: fmtDate, dateTime: dateTime, durTxt: durTxt, euro: euro, service: service, stylist: stylist, intervals: intervals, isOpenDay: isOpenDay,
     worksOn: worksOn, openState: openState, load: load, save: save, seed: seed, freeSlots: freeSlots, nextFree: nextFree, validName: validName, validPhone: validPhone,
-    book: book, cancel: cancel, get: get, mine: mine, ics: ics };
+    book: book, cancel: cancel, get: get, mine: mine, pastMine: pastMine, ics: ics };
 })(window);

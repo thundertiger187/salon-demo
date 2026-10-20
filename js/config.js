@@ -30,6 +30,19 @@ window.SALON_CONFIG = {
   map: { lat: 51.2219329, lon: 6.9126149, zoomDelta: 0.006 },
   // Suchbegriff für "In Google Maps öffnen" (wird automatisch aus Name + Adresse gebildet, wenn leer)
   mapsQuery: 'Haardesign Da Giovanni, Bahnstraße 63, 40699 Erkrath',
+  mapsPlaceId: 'ChIJnxzAeNTNuEcRSB6MdPd67FY', // ergänzt den Google-Maps-Link um query_place_id
+
+  // Google-Bewertungen. Place ID aus Google Maps ermittelt (ohne API-Schlüssel) und geprüft:
+  // ChIJ… dekodiert zur Maps-Feature-ID 0x47b8cdd478c01c9f:0x56ec7af7748c1e48 = „Haardesign Da Giovanni“, Bahnstraße 63.
+  // rating/count sind ein STAND (manuell pflegen) – keine Live-Daten.
+  reviews: {
+    placeId: 'ChIJnxzAeNTNuEcRSB6MdPd67FY',
+    writeUrl: 'https://search.google.com/local/writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY',
+    readUrl: 'https://search.google.com/local/reviews?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY',
+    rating: 4.9,
+    count: 97,
+    asOf: 'Oktober 2026'          // Stand der Angaben (Google Maps, 20.10.2026)
+  },
 
   // Öffnungszeiten laut Google-/Branchenbucheinträgen (Stand 20.10.2026).
   // 0 = Sonntag … 6 = Samstag. [] = geschlossen. Mehrere Fenster möglich: [['09:00','12:30'],['14:00','18:00']]

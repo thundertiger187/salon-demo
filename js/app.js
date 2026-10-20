@@ -20,11 +20,36 @@
     team: ic('<circle cx="9" cy="9" r="3"/><circle cx="16" cy="10" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 19a4.5 4.5 0 0 1 7 0"/>'),
     dl: ic('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'),
     x: ic('<path d="M6 6l12 12M18 6L6 18"/>'),
+    pen: ic('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
     install: ic('<path d="M12 3v12M7 10l5 5 5-5"/><rect x="4" y="17" width="16" height="4" rx="1.5"/>')
   };
   var A = C.address, fullAddr = A.street + ', ' + A.zip + ' ' + A.city;
   var telHref = 'tel:' + (C.phoneTel || C.phone.replace(/[^\d+]/g, ''));
-  var mapsHref = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(C.mapsQuery || (C.name + ', ' + fullAddr));
+  var mapsHref = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(C.mapsQuery || (C.name + ', ' + fullAddr)) + (C.mapsPlaceId ? '&query_place_id=' + encodeURIComponent(C.mapsPlaceId) : '');
+  /* Google-Bewertungen: Links aus config.js; ohne Place ID → Google-Maps-Suche */
+  var R = C.reviews || {};
+  var reviewWrite = R.writeUrl || mapsHref, reviewRead = R.readUrl || mapsHref;
+  var reviewWriteLabel = R.writeUrl ? 'Bewertung schreiben' : 'Auf Google bewerten';
+  function stars(r, size) {
+    var out = '', pct;
+    for (var i = 0; i < 5; i++) {
+      pct = Math.max(0, Math.min(1, r - i)) * 100;
+      out += '<span class="star" style="width:' + size + 'px;height:' + size + 'px"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="bg" d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.2l-5.8 3.2 1.2-6.5L2.6 9.4l6.5-.8z"/></svg>' +
+        '<span class="fill" style="width:' + pct + '%"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:' + size + 'px;height:' + size + 'px"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.2l-5.8 3.2 1.2-6.5L2.6 9.4l6.5-.8z"/></svg></span></span>';
+    }
+    return '<span class="stars" role="img" aria-label="' + String(r).replace('.', ',') + ' von 5 Sternen">' + out + '</span>';
+  }
+  function reviewsCard(id) {
+    var has = R.rating && R.count;
+    return '<div class="rev-card" id="' + id + '"><div class="rev-head"><span class="rev-src">Google-Bewertungen</span>' + (R.asOf ? '<span class="rev-asof">Stand: ' + esc(R.asOf) + '</span>' : '') + '</div>' +
+      (has ? '<div class="rev-score"><span class="rev-num">' + String(R.rating).replace('.', ',') + '</span><span class="rev-meta">' + stars(R.rating, 22) + '<span class="rev-count">' + R.count + ' Bewertungen auf Google</span></span></div>' : '') +
+      '<a class="btn btn-primary btn-lg btn-block" href="' + esc(reviewWrite) + '" target="_blank" rel="noopener" data-review="write">' + I.pen + esc(reviewWriteLabel) + '</a>' +
+      '<a class="btn btn-ghost btn-block" href="' + esc(reviewRead) + '" target="_blank" rel="noopener" data-review="read">Alle Bewertungen auf Google lesen' + I.ext + '</a></div>';
+  }
+  function reviewPrompt(id) {
+    return '<div class="rev-prompt" id="' + id + '"><div class="rev-prompt-t">' + stars(5, 16) + '<b>Zufrieden? Bewerte uns auf Google</b></div><span class="small muted">Dauert nur eine Minute und hilft uns sehr.</span>' +
+      '<a class="btn btn-primary btn-sm" href="' + esc(reviewWrite) + '" target="_blank" rel="noopener" data-review="write">' + I.pen + esc(reviewWriteLabel) + '</a></div>';
+  }
   var CATS = []; C.services.forEach(function (s) { if (CATS.indexOf(s.cat) < 0) CATS.push(s.cat); });
   var DEMO_BANNER = '<div class="demo-banner" role="note">' + I.info + '<span><b>Demo</b> – Buchungen werden nur auf diesem Gerät gespeichert.</span></div>';
   var SAMPLE = '<span class="badge sample">Beispielpreise</span>';
@@ -45,6 +70,7 @@
     $('#v-start').innerHTML =
       '<div class="hero"><span class="eyebrow">' + esc(C.claim) + '</span><h1>' + C.heroTitle + '</h1><p>' + esc(C.heroText) + '</p>' +
       '<div class="hero-btns"><a class="btn btn-light btn-lg" href="#buchen" id="cta-book">' + I.cal + 'Termin buchen</a><a class="btn btn-outline-light btn-lg" href="' + telHref + '" id="cta-call">' + I.phone + 'Anrufen</a></div></div>' +
+      reviewsCard('rev-start') +
       '<div class="tiles">' +
         '<a class="tile" href="#zeiten"><span class="k">Heute</span><span class="v"><span class="status ' + (st.open ? 'open' : 'closed') + '">' + (st.open ? 'Geöffnet' : 'Geschlossen') + '</span></span><span class="s">' + esc(st.sub) + '</span></a>' +
         '<a class="tile" href="#buchen"><span class="k">Nächster freier Termin</span><span class="v">' + (nf ? esc(S.fmtDate(nf.date)) + ' ' + S.fmtTime(nf.start) : '–') + '</span><span class="s">online buchbar</span></a>' +
@@ -99,7 +125,8 @@
       '</div>' +
       '<div class="map-box" id="map-box"><div class="map-fallback" id="map-fallback">' + I.pin + '<b>' + esc(C.name) + '</b><span>' + esc(fullAddr) + '</span><span class="small" id="map-msg">Karte wird geladen …</span></div></div>' +
       '<a class="btn btn-ghost btn-lg btn-block" href="' + mapsHref + '" target="_blank" rel="noopener" id="gmaps">' + I.pin + 'In Google Maps öffnen</a>' +
-      '<p class="small muted center">Karte: © OpenStreetMap-Mitwirkende</p>' + footLinks();
+      '<p class="small muted center">Karte: © OpenStreetMap-Mitwirkende</p>' +
+      '<div class="sec-head"><h2>Bewertungen</h2></div>' + reviewsCard('rev-kontakt') + footLinks();
     loadMap();
   }
   function mapMsg(t) { var m = $('#map-msg'); if (m) m.textContent = t; }
@@ -128,7 +155,7 @@
       '<h3>Berufsbezeichnung</h3><p>[Friseurmeister:in, Handwerkskammer …]</p></div>';
     $('#v-datenschutz').innerHTML = '<a class="b-back" href="#start">' + I.back + 'Zurück</a><h1>Datenschutz</h1><div class="legal"><div class="notice warn">' + I.info + '<div><strong>Platzhalter</strong> – vor Veröffentlichung durch eine vollständige Datenschutzerklärung ersetzen.</div></div>' +
       '<p>Diese Demo speichert Buchungsdaten (Name, Telefonnummer, Hinweis) <b>ausschließlich lokal auf diesem Gerät</b> (localStorage). Es werden keine Daten an den Salon oder Dritte übertragen.</p>' +
-      '<p>Auf der Kontaktseite wird eine Karte von OpenStreetMap eingebunden; dabei wird Ihre IP-Adresse an die OpenStreetMap Foundation übertragen. Links zu Google Maps und Facebook öffnen externe Dienste.</p>' +
+      '<p>Auf der Kontaktseite wird eine Karte von OpenStreetMap eingebunden; dabei wird Ihre IP-Adresse an die OpenStreetMap Foundation übertragen. Links zu Google Maps, Google-Bewertungen und Facebook öffnen externe Dienste (Google bzw. Meta); die Bewertungsangaben (Sterne, Anzahl) sind ein fester Stand ohne Datenabruf bei Google.</p>' +
       '<p><button class="btn btn-danger btn-sm" type="button" id="wipe">Alle Demo-Daten auf diesem Gerät löschen</button></p></div>';
   }
 
@@ -245,19 +272,24 @@
       '<button class="btn btn-primary btn-lg btn-block" type="button" data-ics="' + b.id + '">' + I.dl + 'In Kalender eintragen</button>' +
       '<div id="cancel-zone"><button class="btn btn-danger btn-lg btn-block" type="button" data-cancel="' + b.id + '">' + I.x + 'Termin stornieren</button></div>' +
       '<a class="btn btn-ghost btn-lg btn-block" href="#termine">Meine Termine</a>' +
-      '<button class="btn btn-soft btn-lg btn-block" type="button" data-restart>Weiteren Termin buchen</button>';
+      '<button class="btn btn-soft btn-lg btn-block" type="button" data-restart>Weiteren Termin buchen</button>' + reviewPrompt('rev-done');
   }
 
   /* ---------------- Meine Termine ---------------- */
   function rTermine() {
-    var list = S.mine();
+    var list = S.mine(), past = S.pastMine();
     $('#v-termine').innerHTML = DEMO_BANNER + '<div class="sec-head"><h1>Meine Termine</h1><p class="muted small">Ihre auf diesem Gerät gebuchten Termine.</p></div>' +
       (list.length ? list.map(function (b) {
         var s = S.service(b.serviceId), st = S.stylist(b.staffId);
         return '<div class="mine-item" data-mine="' + b.id + '"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>' + esc(S.fmtDate(b.date, true)) + '</b><span class="badge ok">' + S.fmtTime(b.start) + ' Uhr</span></div>' +
           '<div class="muted small">' + esc(s.name) + ' · ' + S.durTxt(b.duration) + ' · bei ' + esc(st ? st.name : 'Team') + '</div>' +
           '<div class="acts"><button class="btn btn-ghost btn-sm" type="button" data-ics="' + b.id + '">' + I.dl + 'Kalender</button><span class="cz" style="display:contents"><button class="btn btn-danger btn-sm" type="button" data-cancel="' + b.id + '">Stornieren</button></span></div></div>';
-      }).join('') : '<div class="empty"><span>Noch keine Termine auf diesem Gerät.</span><a class="btn btn-primary" href="#buchen">' + I.cal + 'Termin buchen</a></div>') +
+      }).join('') : '<div class="empty"><span>Noch keine kommenden Termine auf diesem Gerät.</span><a class="btn btn-primary" href="#buchen">' + I.cal + 'Termin buchen</a></div>') +
+      (past.length ? '<div class="sec-head" style="margin-top:6px"><h2>Vergangene Termine</h2></div>' + reviewPrompt('rev-past') + past.map(function (b) {
+        var s = S.service(b.serviceId), st = S.stylist(b.staffId);
+        return '<div class="mine-item past" data-past="' + b.id + '"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>' + esc(S.fmtDate(b.date, true)) + '</b><span class="badge">' + S.fmtTime(b.start) + ' Uhr</span></div>' +
+          '<div class="muted small">' + esc(s ? s.name : 'Termin') + ' · bei ' + esc(st ? st.name : 'Team') + '</div></div>';
+      }).join('') : '') +
       '<p class="small muted center">Fragen oder Änderungen? <a href="' + telHref + '">' + esc(C.phone) + '</a></p>';
   }
   function updateCount() { var n = S.mine().length; $('#mine-count').textContent = n ? n : ''; }

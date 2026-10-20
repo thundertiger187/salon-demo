@@ -30,6 +30,19 @@ Meine Termine, Impressum/Datenschutz (Platzhalter). Funktioniert nach dem ersten
 - Icons neu erzeugen: Monogramm in `tools/make_icons.py` (`MONO = 'DG'`) ändern → `python3 tools/make_icons.py` (Pillow)
 - **Nach jeder Änderung** in `sw.js` die `VERSION` erhöhen (z. B. `'v2'`), sonst zeigen installierte Apps die alte Fassung aus dem Cache.
 
+## Google-Bewertungen
+- Links in `js/config.js` → `reviews`: Place ID `ChIJnxzAeNTNuEcRSB6MdPd67FY` (aus Google Maps ermittelt, ohne API-Schlüssel;
+  dekodiert zur Maps-ID `0x47b8cdd478c01c9f:0x56ec7af7748c1e48` des Eintrags „Haardesign Da Giovanni, Bahnstraße 63“).
+  - Bewertung schreiben: `https://search.google.com/local/writereview?placeid=<ID>` (fragt ggf. nach Google-Anmeldung)
+  - Alle Bewertungen: `https://search.google.com/local/reviews?placeid=<ID>`
+  - Fehlt `writeUrl`, fällt die App auf die Google-Maps-Suche zurück (Button „Auf Google bewerten“).
+- Sterne/Anzahl (`rating`, `count`, `asOf`) sind ein **fester Stand** (Google Maps am 20.10.2026: 4,9 ★, 97 Bewertungen) – gelegentlich von Hand aktualisieren.
+- Es werden **keine Rezensionstexte** angezeigt. Echte Texte live einzubinden geht nur über die **Google Places API** (API-Schlüssel,
+  Abrechnungskonto, max. 5 Rezensionen, Attributionspflicht; Schlüssel nicht im Frontend offenlegen → kleiner Server/Proxy nötig)
+  oder über einen Widget-Dienst (z. B. Elfsight, Trustindex – externe Skripte/Cookies → Datenschutzerklärung anpassen). Nicht umgesetzt.
+- Bewertungs-Bitte erscheint nach jeder Buchung und in „Meine Termine“ bei vergangenen Terminen – **für alle gleich** (kein Vorfiltern unzufriedener Kund:innen; das verstößt gegen Googles Richtlinien).
+- Druckvorlagen: `qr-bewertung.png` (QR für Theke/Spiegel) und `bewertung-karte.pdf` (A6). Neu erzeugen: `python3 tools/make_review_card.py` (segno + Playwright).
+
 ## Veröffentlichen (beliebiger statischer HTTPS-Host)
 Alle Pfade sind relativ – läuft auch in einem Unterordner (z. B. `https://name.github.io/salon-demo/`).
 - **GitHub Pages:** Repository anlegen, Inhalt dieses Ordners hochladen, *Settings → Pages → Branch main / root*.

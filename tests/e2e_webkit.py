@@ -40,10 +40,13 @@ try:
             pg.goto(BASE + '#' + h); pg.wait_for_selector(f'#v-{h}.active'); pg.wait_for_timeout(150)
             w = pg.evaluate('[document.documentElement.scrollWidth, innerWidth]'); check(f'kein Überlauf ({h})', w[0] <= w[1], w)
         pg.goto(BASE + '#start'); pg.wait_for_selector('.hero'); pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-start.png'))
+        check('Bewertungs-Karte (iOS) mit Schreib-Link', pg.locator('#rev-start').is_visible() and 'writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY' in pg.get_attribute('#rev-start [data-review=write]', 'href'))
+        pg.evaluate("document.getElementById('rev-start').scrollIntoView()"); pg.wait_for_timeout(200); pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-bewertungen.png'))
         pg.goto(BASE + '#buchen'); pg.click('[data-service="d-schnitt"]'); pg.click('[data-staff="any"]'); pg.wait_for_selector('.time')
         t = pg.locator('.time').first; tm = t.inner_text(); t.click(); pg.click('#time-next')
         pg.fill('#b-name', 'Iris Test'); pg.fill('#b-phone', '0151 1234567'); pg.click('#book-now'); pg.wait_for_selector('#confirm-summary')
         check('Buchung in WebKit', tm in pg.inner_text('#confirm-summary'), tm)
+        check('Bewertungs-Bitte nach Buchung (iOS)', pg.locator('#rev-done').is_visible())
         pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-bestaetigung.png'))
         # Standalone (vom Home-Bildschirm gestartet): Install-Hinweis muss verschwinden
         ctx2 = b.new_context(**dev, locale='de-DE'); p2 = ctx2.new_page()
