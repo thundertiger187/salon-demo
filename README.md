@@ -5,10 +5,9 @@ Reine statische Dateien – kein Server, keine Datenbank, keine externen CDNs (n
 
 **Inhalt:** Start (Termin buchen / Anrufen), Leistungen & Preise (*Beispielpreise*), Öffnungszeiten (heute hervorgehoben,
 „Jetzt geöffnet/geschlossen“), Anfahrt & Kontakt (Anrufen, Google Maps, Facebook, OSM-Karte), Online-Buchung (Demo),
-Meine Termine, **Termin per WhatsApp / SMS an den Salon senden**, Impressum/Datenschutz (Platzhalter). Funktioniert nach dem ersten Aufruf auch **offline** und lässt sich als App installieren.
+Meine Termine, **Terminerinnerungen per WhatsApp/SMS (Demo)**, Impressum/Datenschutz (Platzhalter). Funktioniert nach dem ersten Aufruf auch **offline** und lässt sich als App installieren.
 
 > **Demo:** Buchungen werden nur im Browser des jeweiligen Geräts gespeichert (localStorage) – der Salon bekommt sie nicht.
-> Damit der Salon eine Buchung trotzdem erfährt, schickt die Kundin sie per **WhatsApp oder SMS** (vorausgefüllte Nachricht, siehe unten).
 > Einige Zeiten sind mit Beispielterminen belegt, damit die Slot-Auswahl realistisch aussieht.
 
 ## Daten anpassen – alles in `js/config.js`
@@ -16,8 +15,7 @@ Meine Termine, **Termin per WhatsApp / SMS an den Salon senden**, Impressum/Date
 |---|---|
 | Name, Kurzname, Monogramm, Texte | `name`, `shortName`, `monogram`, `claim`, `heroTitle`, `heroText` |
 | Adresse, Telefon | `address`, `phone` (Anzeige), `phoneTel` (tel:-Link, international) |
-| WhatsApp / SMS (Termin senden) | `contact.whatsapp`, `contact.sms` – internationale Ziffern ohne `+`/`0` (z. B. `491712345678`); `''` blendet den jeweiligen Button aus. `contact.placeholder: true` = Nummer noch Platzhalter (siehe ⚠️ unten) |
-| E-Mail / Facebook | `email`, `facebook` – leerer Wert `''` blendet den Link aus |
+| WhatsApp / E-Mail / Facebook | `whatsapp`, `email`, `facebook` – leerer Wert `''` blendet den Link aus |
 | Karte | `map.lat` / `map.lon` (aktuell OSM-Objekt „Da Giovanni“), `mapsQuery` (Google-Maps-Suche) |
 | Öffnungszeiten | `hours` (0 = So … 6 = Sa, mehrere Zeitfenster möglich), `closedDates` (Urlaub/Feiertage) |
 | Hinweis „Zeiten vorläufig – bitte prüfen“ | `hoursProvisional: false` setzen, sobald die Zeiten bestätigt sind |
@@ -25,6 +23,7 @@ Meine Termine, **Termin per WhatsApp / SMS an den Salon senden**, Impressum/Date
 | Leistungen & Preise | `services` (Kategorie, Dauer in Min., Preis, `from: true` = „ab“) und `priceNote` |
 | Impressum | `owner`, `taxId` (+ Texte in `js/app.js` → `rLegal`) |
 | Buchung | `booking.daysAhead` (14), `leadMinutes` (60), `seedDemoBookings` |
+| Terminerinnerungen | `reminders.defaultChannel` (`'whatsapp'` \| `'sms'` \| `'none'`), `reminders.smsSender` (SMS-Absender, max. 11 Zeichen) |
 | Startzeiten-Raster | pro Leistung `step` (optional). Standard: Dauer ≤ 15 Min. → alle 15 Min.; ≥ 30 Min. → nur :00/:30. Letzte Startzeit = Leistung endet spätestens bei Ladenschluss. Demo-Termine liegen im selben Raster. |
 
 **Zusätzlich (statische Dateien, können config.js nicht lesen):**
@@ -33,36 +32,32 @@ Meine Termine, **Termin per WhatsApp / SMS an den Salon senden**, Impressum/Date
 - Icons neu erzeugen: Monogramm in `tools/make_icons.py` (`MONO = 'DG'`) ändern → `python3 tools/make_icons.py` (Pillow)
 - **Nach jeder Änderung** in `sw.js` die `VERSION` erhöhen (z. B. `'v2'`), sonst zeigen installierte Apps die alte Fassung aus dem Cache.
 
-## Termin per WhatsApp / SMS an den Salon (ab v4)
-Die Demo hat keinen Server – eine Online-Buchung landet nur im Browser der Kundin. Deshalb gibt es auf der
-**Bestätigungsseite** und in **„Meine Termine“** (für jeden kommenden Termin) zwei Buttons:
-- **„Per WhatsApp an den Salon senden“** → `https://wa.me/<contact.whatsapp>?text=<Nachricht>` (öffnet WhatsApp bzw. WhatsApp Web)
-- **„Per SMS senden“** → `sms:+<contact.sms>?&body=<Nachricht>` (die Variante `?&body=` funktioniert auf Android und iPhone)
+## Terminerinnerungen per WhatsApp / SMS (Demo, ab v5)
+Die Kundin bekommt vom Salon **automatisch zwei Erinnerungen**: **2 Tage vorher** (gleiche Uhrzeit) und **2 Stunden vorher**.
+Die Kundin selbst schickt nichts an den Salon.
+- **Buchungsformular:** Auswahl *WhatsApp* (vorausgewählt), *SMS* oder *Keine* + Einwilligungszeile
+  („Ich möchte Terminerinnerungen per WhatsApp erhalten – 2 Tage und 2 Stunden vorher, an die oben angegebene Nummer. Jederzeit abbestellbar.“).
+  Bei einer deutschen Festnetznummer erscheint der Hinweis, dass WhatsApp/SMS nur auf Handynummern ankommen (blockiert nicht).
+- **Bestätigung & „Meine Termine“:** „Erinnerungen geplant“ mit Kanal-Symbol und den exakten Zeitpunkten,
+  z. B. „Mo, 19.10. um 10:30 Uhr – 2 Tage vorher“ / „Mi, 21.10. um 08:30 Uhr – 2 Stunden vorher“.
+  Status je Erinnerung: **geplant**, **verschickt** (Zeitpunkt erreicht) oder **entfällt** (lag bei der Buchung schon in der
+  Vergangenheit, z. B. Termin für morgen → 2-Tage-Erinnerung entfällt; durchgestrichen + „Termin kurzfristig gebucht“).
+  „2 Tage vorher“ rechnet in Kalendertagen (Zeitumstellung ändert die Uhrzeit nicht).
+- **„Vorschau ansehen“:** Handy-Ansicht mit beiden Nachrichten – WhatsApp-Chat (grüner Kopf „Haardesign Da Giovanni“, Blasen mit Uhrzeit
+  und Häkchen) bzw. SMS-Verlauf (Absender „Da Giovanni“, graue Blasen). Der Link in der Nachricht führt zu „Meine Termine“.
+- **„Demo: Erinnerung jetzt zeigen“:** Sperrbildschirm mit eingleitender Mitteilung (nächste geplante Erinnerung); Antippen öffnet den Chat.
+- Texte: *„Hallo {Vorname}, kleine Erinnerung: Ihr Termin bei Haardesign Da Giovanni ist am {Wochentag, TT.MM.} um {HH:MM} Uhr
+  ({Leistung} bei {Mitarbeiter}). Absagen oder verschieben bis 24 Std. vorher: {Link zu Meine Termine}. Bis bald!“* und
+  *„Hallo {Vorname}, in 2 Stunden um {HH:MM} Uhr sehen wir uns bei Haardesign Da Giovanni, Bahnstraße 63, Erkrath. Bis gleich!“*
+  (in `js/app.js` → `remTexts`). Kanal + Zeitpunkte: `js/booking.js` → `reminders()`; gespeichert wird `reminder` am Termin.
+- In der App steht dezent: *„Demo – im echten Betrieb verschickt der Salon-Server die Nachrichten automatisch“*.
 
-Vorausgefüllte Nachricht (URL-kodiert mit `encodeURIComponent`):
-```
-Hallo Haardesign Da Giovanni, ich habe über die App einen Termin angefragt:
-Leistung: Herrenschnitt inkl. Waschen
-Bei: Giovanni            (bei „Egal – erste freie Zeit“: egal)
-Datum: Mi, 21.10.2026
-Uhrzeit: 14:00 Uhr
-Name: Petra Schulz
-Telefon: 0171 2345678
-Hinweis: …               (nur wenn angegeben)
-Bitte kurz bestätigen. Danke!
-```
-- Hinweis über den Buttons: *„Ihre Anfrage erreicht den Salon erst, wenn Sie die vorbereitete Nachricht abschicken – diese Demo hat keinen Server.“*
-- Nach dem Antippen zeigt die App **„Anfrage gesendet“** (per WhatsApp/SMS, Uhrzeit) – gespeichert in localStorage am Termin (`sent.request`).
-  Ob die Nachricht wirklich abgeschickt wurde, kann die App nicht wissen; die Buttons bleiben deshalb verfügbar.
-- **Absage:** Nach dem Stornieren (in „Meine Termine“ oder auf der Bestätigungsseite) wird eine vorausgefüllte **Absage per WhatsApp/SMS**
-  angeboten („… leider muss ich meinen Termin absagen: …“), Status „Absage gesendet“ (`sent.cancel`).
-- Solange `contact.placeholder: true`, steht bei den Buttons „(Demo: Zielnummer ist noch ein Platzhalter.)“ und die Kontaktseite zeigt
-  **keinen** WhatsApp-Eintrag. Mit echter Nummer `placeholder: false` setzen → Hinweis weg, WhatsApp erscheint auch unter „Kontakt“.
-
-> ⚠️ **Platzhalter-Nummer:** `contact.whatsapp` und `contact.sms` enthalten aktuell `49211241886` – das ist die **Festnetznummer**
-> des Salons (0211 241886). Festnetzanschlüsse können in der Regel **kein WhatsApp** und meist **keine SMS** empfangen.
-> Vor dem Einsatz die echte WhatsApp-(Business-)/Handynummer des Salons eintragen (nur Ziffern, mit 49, ohne führende 0),
-> `placeholder: false` setzen und in `sw.js` die `VERSION` erhöhen.
+> **Für den echten Versand** braucht es einen **Server** (Buchungen zentral speichern, Zeitplan/Cron für die Versandzeitpunkte)
+> plus einen Versanddienst: **WhatsApp Business Platform (Cloud API)** – Business-Konto, verifizierte Nummer, von Meta freigegebene
+> *Nachrichtenvorlagen* (Kategorie „Utility“), kostenpflichtig pro Nachricht, ggf. über einen Anbieter wie Twilio/360dialog –
+> bzw. ein **SMS-Gateway** (z. B. Twilio, sipgate, LINK Mobility, seven.io). Zugangsschlüssel gehören auf den Server, nie ins Frontend.
+> Rechtlich: ausdrückliche Einwilligung (Opt-in) dokumentieren, Abmeldung ermöglichen, Datenschutzerklärung + AV-Vertrag mit dem Anbieter.
+> Für ein sauberes Opt-in sollte die Kundin den Kanal aktiv wählen; die WhatsApp-Vorauswahl ist eine Demo-Vorgabe (`reminders.defaultChannel`).
 
 ## Dauern & Raster (Stand v3)
 | Leistung | Dauer | Startzeiten |
@@ -107,13 +102,15 @@ bzw. **„Zum Startbildschirm hinzufügen“** → **Installieren**. Die App ers
 
 ## Tests
 `python3 tests/e2e.py` – Playwright/Chromium, 390×844 mobil, unter Unterpfad `/salon-demo/` (Ergebnis: `tests/e2e-ergebnis.txt`, Screenshots in `screens/`).
-  Prüft u. a. die WhatsApp-/SMS-Links: exakte `href` = Nummer + `encodeURIComponent(Text)`, dekodierter Text, „Anfrage/Absage gesendet“, Absage nach Storno.
-  Screenshots: `screens/bestaetigung-whatsapp.png`, `bestaetigung-gesendet.png`, `meine-termine-whatsapp.png`, `meine-termine-absage.png`, `ios-bestaetigung-whatsapp.png`.
+  Erinnerungen: Kanalwahl + Einwilligung, exakte Zeitpunkte/Status (inkl. „entfällt“ bei kurzfristiger Buchung, „verschickt“, Zeitumstellung),
+  Vorschau-Texte WhatsApp/SMS, Sperrbildschirm-Demo, Esc/Fokus. Screenshots: `screens/bestaetigung-erinnerung.png`,
+  `erinnerung-whatsapp-vorschau.png`, `erinnerung-sms-vorschau.png`, `erinnerung-sperrbildschirm.png`, `meine-termine-erinnerung.png`, `ios-erinnerung-vorschau.png`.
 `python3 tests/e2e_webkit.py` – iPhone-14-Emulation mit WebKit (Ergebnis: `tests/e2e-webkit-ergebnis.txt`).
 Lighthouse (mobil): Performance 98, Barrierefreiheit 100, Best Practices 100, SEO 100 – `tests/lighthouse-report.html`.
 (Lighthouse 12 hat keine PWA-Kategorie mehr; Installierbarkeit wird im E2E-Test über Chrome `Page.getInstallabilityErrors` geprüft → keine Fehler.)
 
 ## Grenzen der Demo
-- Buchungen sind nur lokal (Übermittlung an den Salon nur per WhatsApp/SMS durch die Kundin); für echten Betrieb ist ein Buchungs-Backend nötig (Salon-Kalender, Bestätigung per SMS/E-Mail).
+- Buchungen sind nur lokal; für echten Betrieb ist ein Buchungs-Backend nötig (Salon-Kalender, Bestätigung per SMS/E-Mail).
+- Terminerinnerungen werden nur geplant und als Vorschau gezeigt – **nicht verschickt** (siehe oben: Server + WhatsApp Business API / SMS-Anbieter).
 - Öffnungs-Schlusszeiten und Samstag sind Platzhalter; Preise sind Beispielpreise; Teamnamen sind Platzhalter.
 - Die OSM-Karte braucht Internet (offline erscheint ein Hinweis). Impressum/Datenschutz müssen vor Livegang ausgefüllt werden.

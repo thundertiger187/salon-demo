@@ -145,22 +145,35 @@
     var staffId = data.staffId !== 'any' && slot.staffIds.indexOf(data.staffId) >= 0 ? data.staffId
       : slot.staffIds.slice().sort(function (a, b) { return loadOf(s, a, data.date) - loadOf(s, b, data.date); })[0];
     var b = { id: uid(), mine: true, serviceId: sv.id, staffId: staffId, staffChoice: data.staffId, date: data.date, start: data.start, duration: sv.duration, price: sv.price, priceFrom: !!sv.from,
-      name: data.name.trim(), phone: data.phone.trim(), note: (data.note || '').trim().slice(0, 500), status: 'ok', createdAt: new Date().toISOString() };
+      name: data.name.trim(), phone: data.phone.trim(), note: (data.note || '').trim().slice(0, 500), status: 'ok', createdAt: (now || new Date()).toISOString(),
+      reminder: REM_CHANNELS.indexOf(data.reminder) >= 0 ? data.reminder : 'none' };
     s.bookings.push(b); save(s);
     return { ok: true, booking: b };
   }
   function cancel(id) { var s = load(); s.bookings.forEach(function (b) { if (b.id === id && b.mine) { b.status = 'cancelled'; b.cancelledAt = new Date().toISOString(); } }); save(s); }
-  /* Versand an den Salon merken (WhatsApp/SMS-Link angetippt): kind 'request' | 'cancel', via 'whatsapp' | 'sms' */
-  function markSent(id, kind, via) {
-    var s = load(), hit = null;
-    s.bookings.forEach(function (b) { if (b.id === id && b.mine) { b.sent = b.sent || {}; b.sent[kind] = { via: via, at: new Date().toISOString() }; hit = b; } });
-    if (hit) save(s); return hit;
-  }
   function get(id) { return load().bookings.filter(function (b) { return b.id === id; })[0] || null; }
   function mine(now) {
     now = now || new Date();
     return load().bookings.filter(function (b) { return b.mine && b.status !== 'cancelled' && dateTime(b.date, b.start + b.duration) > now; })
       .sort(function (a, b) { return (a.date + pad(a.start)) < (b.date + pad(b.start)) ? -1 : 1; });
+  }
+
+  /* ---------- Terminerinnerungen (Demo: nur Planung/Anzeige, der Versand wäre Aufgabe des Salon-Servers) ----------
+     d2 = 2 Tage vorher zur selben Uhrzeit (Kalendertage, damit Sommer-/Winterzeit keine Rolle spielt), h2 = 2 Stunden vorher.
+     Status: 'entfaellt' = Zeitpunkt lag bei der Buchung schon in der Vergangenheit (kurzfristig gebucht),
+             'verschickt' = Zeitpunkt inzwischen erreicht, 'geplant' = liegt in der Zukunft. */
+  var REM_CHANNELS = ['whatsapp', 'sms'];
+  var REMINDERS = [{ id: 'd2', label: '2 Tage vorher' }, { id: 'h2', label: '2 Stunden vorher' }];
+  function reminderAt(b, id) { return id === 'd2' ? dateTime(addDays(b.date, -2), b.start) : dateTime(b.date, b.start - 120); }
+  function reminders(b, now) {
+    if (!b || REM_CHANNELS.indexOf(b.reminder) < 0) return [];
+    now = now || new Date();
+    var created = b.createdAt ? new Date(b.createdAt) : now;
+    return REMINDERS.map(function (r) {
+      var at = reminderAt(b, r.id);
+      return { id: r.id, label: r.label, at: at, date: toISO(at), min: at.getHours() * 60 + at.getMinutes(),
+        status: at <= created ? 'entfaellt' : (at <= now ? 'verschickt' : 'geplant') };
+    });
   }
 
   /* Vergangene eigene Termine (für die Bewertungs-Bitte), neueste zuerst */
@@ -189,5 +202,5 @@
   root.SB = { WD: WD, WD_SHORT: WD_SHORT, MONTHS: MONTHS, pad: pad, toISO: toISO, fromISO: fromISO, todayISO: todayISO, addDays: addDays, weekday: weekday, hm: hm,
     fmtTime: fmtTime, fmtTimeShort: fmtTimeShort, fmtDate: fmtDate, dateTime: dateTime, durTxt: durTxt, stepFor: stepFor, euro: euro, service: service, stylist: stylist, intervals: intervals, isOpenDay: isOpenDay,
     worksOn: worksOn, openState: openState, load: load, save: save, seed: seed, freeSlots: freeSlots, nextFree: nextFree, validName: validName, validPhone: validPhone,
-    book: book, cancel: cancel, markSent: markSent, get: get, mine: mine, pastMine: pastMine, ics: ics };
+    book: book, cancel: cancel, get: get, reminders: reminders, REM_CHANNELS: REM_CHANNELS, mine: mine, pastMine: pastMine, ics: ics };
 })(window);

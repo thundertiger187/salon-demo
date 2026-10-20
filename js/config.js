@@ -19,16 +19,7 @@ window.SALON_CONFIG = {
   },
   phone: '0211 241886',                 // Anzeige
   phoneTel: '+49211241886',             // für tel:-Links
-  // Termin per WhatsApp / SMS an den Salon senden (Demo ohne Server: erst diese Nachricht erreicht den Salon).
-  // Nummern international, NUR Ziffern, ohne + und ohne führende 0 (z. B. 0171 2345678 → '491712345678').
-  // !!! PLATZHALTER: aktuell steht hier die FESTNETZNUMMER des Salons (0211 241886). Festnetznummern können
-  // !!! in der Regel KEIN WhatsApp und meist keine SMS empfangen → vor dem Livegang die echte WhatsApp-/Handynummer
-  // !!! eintragen und placeholder auf false setzen.
-  contact: {
-    whatsapp: '49211241886',            // PLATZHALTER – echte WhatsApp-(Business-)Nummer eintragen
-    sms: '49211241886',                 // PLATZHALTER – echte Handynummer für SMS eintragen
-    placeholder: true                   // true = Nummern noch nicht bestätigt → WhatsApp-Link auf der Kontaktseite bleibt ausgeblendet
-  },
+  whatsapp: '',                         // WhatsApp-Nummer unbekannt → Link ausgeblendet (z. B. '+49211241886' eintragen)
   facebook: 'https://www.facebook.com/HaardesignDaGiovanni/',
   email: '',                            // PLATZHALTER E-Mail (leer = ausgeblendet)
   owner: '[Inhaber:in Vor- und Nachname]', // PLATZHALTER für Impressum
@@ -103,6 +94,12 @@ window.SALON_CONFIG = {
     // Startzeiten-Raster: pro Leistung (services[].step bzw. Standardregel oben), letzte Startzeit so, dass die Leistung bis Ladenschluss fertig ist
     leadMinutes: 60,      // frühestens 60 Min. ab jetzt
     seedDemoBookings: true // belegt in der Demo einige Zeiten mit Beispielterminen
+  },
+  // Terminerinnerungen an die Kundin (2 Tage + 2 Stunden vorher). In der Demo nur Planung + Vorschau –
+  // der echte Versand braucht einen Server mit WhatsApp Business API bzw. SMS-Anbieter (siehe README).
+  reminders: {
+    defaultChannel: 'whatsapp',   // 'whatsapp' | 'sms' | 'none' – Vorauswahl im Buchungsformular
+    smsSender: 'Da Giovanni'      // Absendername der SMS (max. 11 Zeichen)
   },
   storageKey: 'salon-erkrath-demo-v2'   // v2: neues Startzeiten-Raster → Demo-Termine werden neu erzeugt
 };
