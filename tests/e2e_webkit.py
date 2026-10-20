@@ -48,6 +48,12 @@ try:
         check('Buchung in WebKit', tm in pg.inner_text('#confirm-summary'), tm)
         check('Bewertungs-Bitte nach Buchung (iOS)', pg.locator('#rev-done').is_visible())
         pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-bestaetigung.png'))
+        wa = pg.get_attribute('#v-buchen [data-send=whatsapp]', 'href'); sms = pg.get_attribute('#v-buchen [data-send=sms]', 'href')
+        from urllib.parse import unquote
+        check('iOS: WhatsApp-Link wa.me + SMS-Link sms:+…?&body=', wa.startswith('https://wa.me/49211241886?text=Hallo%20Haardesign%20Da%20Giovanni') and sms.startswith('sms:+49211241886?&body=Hallo%20Haardesign') and 'Name: Iris Test' in unquote(sms) and 'Bei: egal' in unquote(sms), sms[:60])
+        pg.evaluate("document.querySelector('#v-buchen [data-sendbox=request]').scrollIntoView({block: 'center'})"); pg.wait_for_timeout(200)
+        w = pg.evaluate('[document.documentElement.scrollWidth, innerWidth]'); check('kein Überlauf (Senden-Box)', w[0] <= w[1], w)
+        pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-bestaetigung-whatsapp.png'))
         # Standalone (vom Home-Bildschirm gestartet): Install-Hinweis muss verschwinden
         ctx2 = b.new_context(**dev, locale='de-DE'); p2 = ctx2.new_page()
         p2.add_init_script("Object.defineProperty(navigator, 'standalone', { get: () => true });")

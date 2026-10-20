@@ -1,7 +1,8 @@
 """E2E-Test (Playwright, headless Chromium, 390x844 mobil) unter einem UNTERPFAD.
 Kopiert die App nach /tmp/site/salon-demo/ und startet python http.server auf /tmp/site.
 Aufruf: python3 tests/e2e.py   → Screenshots in screens/, Ergebnis in tests/e2e-ergebnis.txt"""
-import os, sys, json, shutil, subprocess, time, socket, re
+import os, sys, json, shutil, subprocess, time, socket, re, datetime
+from urllib.parse import quote, unquote
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,7 +40,25 @@ def to_services(page):
         if page.locator('[data-service]').count(): return
         page.click('#v-buchen .b-back'); page.wait_for_timeout(50)
 
+WA_NUM = '49211241886'  # Platzhalter aus config.js (contact.whatsapp / contact.sms)
+WD = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+def enc(t):  # entspricht encodeURIComponent
+    return quote(t, safe="-_.!~*'()")
+def expected_msg(kind, leistung, bei, iso, hhmm, name, phone, note=''):
+    d = datetime.date.fromisoformat(iso)
+    head = 'leider muss ich meinen Termin absagen:' if kind == 'cancel' else 'ich habe über die App einen Termin angefragt:'
+    lines = [f'Hallo Haardesign Da Giovanni, {head}', f'Leistung: {leistung}', f'Bei: {bei}', f'Datum: {WD[d.weekday()]}, {d:%d.%m.%Y}', f'Uhrzeit: {hhmm} Uhr', f'Name: {name}', f'Telefon: {phone}']
+    if kind != 'cancel' and note: lines.append(f'Hinweis: {note}')
+    lines.append('Vielen Dank und viele Grüße!' if kind == 'cancel' else 'Bitte kurz bestätigen. Danke!')
+    return '\n'.join(lines)
+def send_links(page, scope):
+    return page.get_attribute(scope + ' [data-send=whatsapp]', 'href'), page.get_attribute(scope + ' [data-send=sms]', 'href')
+def block_send_navigation(page):
+    # WhatsApp/SMS im Test nicht wirklich öffnen – App-Handler (document) läuft vorher, window-Listener verhindert nur die Navigation
+    page.evaluate("window.addEventListener('click', e => { if (e.target.closest('[data-send]')) e.preventDefault(); })")
+
 def shot(page, name, full=False):
+    page.evaluate("document.querySelectorAll('.toast').forEach(t => t.remove())")
     page.wait_for_timeout(250)
     page.screenshot(path=os.path.join(SHOTS, name), full_page=full)
 
@@ -187,6 +206,28 @@ def main():
             check('Bewertungs-Bitte auf Bestätigungsseite', page.locator('#rev-done').is_visible() and 'Zufrieden? Bewerte uns auf Google' in page.inner_text('#rev-done') and page.get_attribute('#rev-done a', 'href') == 'https://search.google.com/local/writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY')
             check('Bestätigung mit Zusammenfassung', 'Herrenschnitt' in summ and hh in summ and 'Petra Schulz' in summ and 'Bahnstraße 63' in summ, summ.replace('\n', ' | ')[:160])
             no_overflow(page, 'bestaetigung'); shot(page, 'bestaetigung.png')
+            print('\n== Termin per WhatsApp / SMS an den Salon ==')
+            exp = expected_msg('request', 'Herrenschnitt inkl. Waschen', 'Giovanni', day, hh, 'Petra Schulz', '0171 2345678', 'Bitte etwas kürzer an den Seiten')
+            wa, sms = send_links(page, '#v-buchen [data-sendbox=request]')
+            check('Bestätigung: Buttons „Per WhatsApp an den Salon senden“ + „Per SMS senden“', page.locator('#v-buchen [data-send=whatsapp]:has-text("Per WhatsApp an den Salon senden")').is_visible() and page.locator('#v-buchen [data-send=sms]:has-text("Per SMS senden")').is_visible())
+            check('WhatsApp-Link = https://wa.me/<Nummer>?text=<encodeURIComponent(Text)>', wa == f'https://wa.me/{WA_NUM}?text=' + enc(exp), wa[:120])
+            check('WhatsApp-Text dekodiert korrekt (Leistung/Bei/Datum/Uhrzeit/Name/Telefon/Hinweis)', unquote(wa.split('?text=', 1)[1]) == exp, unquote(wa.split('?text=', 1)[1]).replace('\n', ' ⏎ '))
+            check('Zeilenumbrüche als %0A, Umlaute UTF-8 kodiert', '%0A' in wa and '%C3%BC' in wa and ' ' not in wa and '\n' not in wa)
+            check('SMS-Link = sms:+<Nummer>?&body=<Text>', sms == f'sms:+{WA_NUM}?&body=' + enc(exp), sms[:80])
+            check('WhatsApp öffnet in neuem Tab (target=_blank, rel=noopener)', page.get_attribute('#v-buchen [data-send=whatsapp]', 'target') == '_blank' and 'noopener' in page.get_attribute('#v-buchen [data-send=whatsapp]', 'rel'))
+            hint = page.inner_text('#v-buchen .send-hint')
+            check('Hinweis: erreicht den Salon erst nach dem Absenden', 'erreicht den Salon erst, wenn Sie die vorbereitete Nachricht abschicken' in hint, hint)
+            check('Buttons per aria-describedby mit Hinweis verknüpft', page.evaluate("[...document.querySelectorAll('#v-buchen [data-sendbox=request] [data-send]')].every(a => document.getElementById(a.getAttribute('aria-describedby')))"))
+            check('Buttons mind. 44 px hoch (Touch-Ziel)', all(bb['height'] >= 44 for bb in [page.locator(f'#v-buchen [data-sendbox=request] [data-send={v}]').bounding_box() for v in ('whatsapp', 'sms')]))
+            no_overflow(page, 'bestaetigung whatsapp')
+            page.evaluate("document.querySelector('#v-buchen [data-sendbox=request]').scrollIntoView({block: 'center'})")
+            shot(page, 'bestaetigung-whatsapp.png')
+            block_send_navigation(page)
+            page.click('#v-buchen [data-sendbox=request] [data-send=whatsapp]')
+            stt = page.inner_text('#v-buchen [data-sendbox=request] .send-status')
+            sent = page.evaluate(f"JSON.parse(localStorage.getItem(SALON_CONFIG.storageKey)).bookings.find(b => b.mine && b.date === '{day}').sent")
+            check('Nach Antippen: „Anfrage gesendet“ angezeigt + in localStorage gespeichert', 'Anfrage gesendet' in stt and 'WhatsApp' in stt and sent and sent['request']['via'] == 'whatsapp', [stt, sent])
+            shot(page, 'bestaetigung-gesendet.png')
             with page.expect_download() as dl:
                 page.click('#v-buchen [data-ics]')
             d = dl.value; path = d.path(); ics = open(path, encoding='utf-8').read()
@@ -201,9 +242,22 @@ def main():
             page.goto(BASE + '#termine'); page.wait_for_selector('#v-termine.active')
             check('Meine Termine listet die Buchung', page.locator('.mine-item').count() == 1)
             no_overflow(page, 'termine'); shot(page, 'meine-termine.png')
+            wa, sms = send_links(page, '.mine-item')
+            check('Meine Termine: WhatsApp-/SMS-Link je Termin mit gleichem Text', wa == f'https://wa.me/{WA_NUM}?text=' + enc(exp) and sms == f'sms:+{WA_NUM}?&body=' + enc(exp), wa[:80])
+            check('Meine Termine: Hinweis „erst nach dem Absenden“ + aria-describedby', page.locator('#send-hint-termine').is_visible() and page.get_attribute('.mine-item [data-send=sms]', 'aria-describedby') == 'send-hint-termine')
+            check('„Anfrage gesendet“ bleibt nach Neuladen erhalten', 'Anfrage gesendet per WhatsApp' in page.inner_text('.mine-item .send-status'), page.inner_text('.mine-item .send-status'))
+            page.evaluate("window.scrollTo(0, 0)"); shot(page, 'meine-termine-whatsapp.png')
             page.click('.mine-item [data-cancel]'); page.click('[data-cancel-yes]')
             page.wait_for_selector('#v-termine .empty')
             check('Stornieren in Meine Termine', page.locator('.mine-item').count() == 0)
+            expc = expected_msg('cancel', 'Herrenschnitt inkl. Waschen', 'Giovanni', day, hh, 'Petra Schulz', '0171 2345678')
+            wa, sms = send_links(page, '#cancel-note')
+            check('Nach Storno: Absage per WhatsApp/SMS angeboten', page.locator('#cancel-note').is_visible() and 'bereits an den Salon gesendet' in page.inner_text('#cancel-note'))
+            check('Absage-Links mit kodiertem Absage-Text', wa == f'https://wa.me/{WA_NUM}?text=' + enc(expc) and sms == f'sms:+{WA_NUM}?&body=' + enc(expc), unquote(wa.split('?text=', 1)[1]).replace('\n', ' ⏎ '))
+            no_overflow(page, 'termine absage'); shot(page, 'meine-termine-absage.png')
+            block_send_navigation(page); page.click('#cancel-note [data-send=sms]')
+            check('Absage: „Absage gesendet“ per SMS', 'Absage gesendet per SMS' in page.inner_text('#cancel-note .send-status'))
+            page.click('[data-dismiss-cancel]'); check('Absage-Hinweis schließbar', page.locator('#cancel-note').count() == 0)
             to_services(page); page.click('[data-service="h-schnitt"]'); page.click('[data-staff="giovanni"]'); page.click(f'[data-day="{day}"]'); page.wait_for_selector('.day.sel')
             times3 = page.eval_on_selector_all('#v-buchen .time', 'els => els.map(e => +e.dataset.time)')
             check('Nach Storno ist der Slot wieder frei', pick in times3)
@@ -213,8 +267,12 @@ def main():
             page.fill('#b-name', 'Max Muster'); page.fill('#b-phone', '+49 211 123456'); page.click('#book-now'); page.wait_for_selector('#confirm-summary')
             bei = page.inner_text('#confirm-summary .row:nth-child(3) span:last-child')
             check('Buchung „egal“ teilt Friseur:in zu', bei in ['Giovanni', 'Marco', 'Jenny', 'Julia', 'Anny'], bei)
+            wa, _ = send_links(page, '#v-buchen [data-sendbox=request]')
+            check('WhatsApp-Text bei „egal“: „Bei: egal“', 'Bei: egal' in unquote(wa) and 'Telefon: +49 211 123456' in unquote(wa) and 'Hinweis:' not in unquote(wa))
             page.click('#cancel-zone [data-cancel]'); page.click('[data-cancel-yes]'); page.wait_for_selector('.done-ico.bad')
             check('„Termin stornieren“ auf Bestätigungsseite', 'Termin storniert' in page.inner_text('#v-buchen'))
+            wa, _ = send_links(page, '#v-buchen [data-sendbox=cancel]')
+            check('Storno-Seite: Absage per WhatsApp angeboten', 'leider muss ich meinen Termin absagen' in unquote(wa))
 
             print('\n== Kontakt ==')
             page.click('a[data-nav=kontakt]'); page.wait_for_selector('#v-kontakt.active #map-box')
@@ -225,7 +283,7 @@ def main():
             mh = page.get_attribute('#gmaps', 'href')
             check('Google-Maps-Link mit query_place_id', mh.endswith('&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY'), mh)
             check('Facebook-Link', page.get_attribute('#k-fb', 'href') == 'https://www.facebook.com/HaardesignDaGiovanni/')
-            check('Kein WhatsApp-Link', page.locator('a[href*="wa.me"]').count() == 0)
+            check('Kontakt: kein WhatsApp-Eintrag, solange Nummer Platzhalter (contact.placeholder)', page.locator('#v-kontakt a[href*="wa.me"]').count() == 0)
             src = page.get_attribute('#map-box iframe', 'src')
             check('OSM-iframe mit Marker 51.2219/6.9126', src and 'openstreetmap.org/export/embed.html' in src and 'marker=51.2219329%2C6.9126149' in src, src)
             try:

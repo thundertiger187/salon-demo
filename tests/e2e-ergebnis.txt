@@ -1,8 +1,8 @@
-E2E 2026-10-20 23:18 – 88/88 bestanden – http://localhost:8765/salon-demo/
+E2E 2026-10-20 23:28 – 109/109 bestanden – http://localhost:8765/salon-demo/
 OK   Startseite lädt unter Unterpfad
 OK   Service Worker registriert, Scope = Unterpfad – http://localhost:8765/salon-demo/
 OK   Service Worker kontrolliert die Seite – http://localhost:8765/salon-demo/sw.js
-OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v3'], 'n': 19}
+OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v4'], 'n': 19}
 OK   Manifest Content-Type – application/manifest+json
 OK   Manifest Felder (name/short_name/display/start_url/scope/Farben) – {'name': 'Haardesign Da Giovanni', 'short_name': 'Da Giovanni', 'start_url': './', 'scope': './', 'display': 'standalone'}
 OK   Icon lädt icons/icon-192.png (any) – 192x192
@@ -53,21 +53,42 @@ OK   Validierung: ungültige Telefonnummer abgelehnt
 OK   Bewertungs-Bitte auf Bestätigungsseite
 OK   Bestätigung mit Zusammenfassung – Wann | Mittwoch, 21. Oktober 2026 | 14:00–14:30 Uhr | Was | Herrenschnitt inkl. Waschen | Bei | Giovanni | Preis | 26 € (Beispielpreis) | Name | Petra Schulz | 
 OK   kein horizontales Überlaufen (bestaetigung) – [390, 390]
+OK   Bestätigung: Buttons „Per WhatsApp an den Salon senden“ + „Per SMS senden“
+OK   WhatsApp-Link = https://wa.me/<Nummer>?text=<encodeURIComponent(Text)> – https://wa.me/49211241886?text=Hallo%20Haardesign%20Da%20Giovanni%2C%20ich%20habe%20%C3%BCber%20die%20App%20einen%20Term
+OK   WhatsApp-Text dekodiert korrekt (Leistung/Bei/Datum/Uhrzeit/Name/Telefon/Hinweis) – Hallo Haardesign Da Giovanni, ich habe über die App einen Termin angefragt: ⏎ Leistung: Herrenschnitt inkl. Waschen ⏎ Bei: Giovanni ⏎ Datum: Mi, 21.10.2026 ⏎ Uhrzeit: 14:00 Uhr ⏎ Name: Petra Schulz ⏎ Telefon: 0171 2345678 ⏎ Hinweis: Bitte etwas kürzer an den Seiten ⏎ Bitte kurz bestätigen. Danke!
+OK   Zeilenumbrüche als %0A, Umlaute UTF-8 kodiert
+OK   SMS-Link = sms:+<Nummer>?&body=<Text> – sms:+49211241886?&body=Hallo%20Haardesign%20Da%20Giovanni%2C%20ich%20habe%20%C3%
+OK   WhatsApp öffnet in neuem Tab (target=_blank, rel=noopener)
+OK   Hinweis: erreicht den Salon erst nach dem Absenden – Wichtig: Ihre Anfrage erreicht den Salon erst, wenn Sie die vorbereitete Nachricht abschicken – diese Demo hat keinen Server. (Demo: Zielnummer ist noch ein Platzhalter.)
+OK   Buttons per aria-describedby mit Hinweis verknüpft
+OK   Buttons mind. 44 px hoch (Touch-Ziel)
+OK   kein horizontales Überlaufen (bestaetigung whatsapp) – [390, 390]
+OK   Nach Antippen: „Anfrage gesendet“ angezeigt + in localStorage gespeichert – ['Anfrage gesendet per WhatsApp · 20.10., 23:27 Uhr', {'request': {'via': 'whatsapp', 'at': '2026-10-20T21:27:50.538Z'}}]
 OK   .ics-Download (In Kalender eintragen) – friseurtermin-2026-10-21.ics
 OK   Meine-Termine-Zähler = 1
 OK   Gebuchter Slot verschwindet (und überlappende) – 11 → 10
 OK   Meine Termine listet die Buchung
 OK   kein horizontales Überlaufen (termine) – [390, 390]
+OK   Meine Termine: WhatsApp-/SMS-Link je Termin mit gleichem Text – https://wa.me/49211241886?text=Hallo%20Haardesign%20Da%20Giovanni%2C%20ich%20hab
+OK   Meine Termine: Hinweis „erst nach dem Absenden“ + aria-describedby
+OK   „Anfrage gesendet“ bleibt nach Neuladen erhalten – Anfrage gesendet per WhatsApp · 20.10., 23:27 Uhr
 OK   Stornieren in Meine Termine
+OK   Nach Storno: Absage per WhatsApp/SMS angeboten
+OK   Absage-Links mit kodiertem Absage-Text – Hallo Haardesign Da Giovanni, leider muss ich meinen Termin absagen: ⏎ Leistung: Herrenschnitt inkl. Waschen ⏎ Bei: Giovanni ⏎ Datum: Mi, 21.10.2026 ⏎ Uhrzeit: 14:00 Uhr ⏎ Name: Petra Schulz ⏎ Telefon: 0171 2345678 ⏎ Vielen Dank und viele Grüße!
+OK   kein horizontales Überlaufen (termine absage) – [390, 390]
+OK   Absage: „Absage gesendet“ per SMS
+OK   Absage-Hinweis schließbar
 OK   Nach Storno ist der Slot wieder frei
 OK   Buchung „egal“ teilt Friseur:in zu – Marco
+OK   WhatsApp-Text bei „egal“: „Bei: egal“
 OK   „Termin stornieren“ auf Bestätigungsseite
+OK   Storno-Seite: Absage per WhatsApp angeboten
 OK   Click-to-call tel:+49211241886
 OK   Google-Maps-Link mit Salon-Query – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY
 OK   Bewertungs-Karte in Kontakt
 OK   Google-Maps-Link mit query_place_id – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY
 OK   Facebook-Link
-OK   Kein WhatsApp-Link
+OK   Kontakt: kein WhatsApp-Eintrag, solange Nummer Platzhalter (contact.placeholder)
 OK   OSM-iframe mit Marker 51.2219/6.9126 – https://www.openstreetmap.org/export/embed.html?bbox=6.90661%2C51.21833%2C6.91861%2C51.22553&layer=mapnik&marker=51.2219329%2C6.9126149
 OK   OSM-Karte geladen
 OK   kein horizontales Überlaufen (kontakt) – [390, 390]

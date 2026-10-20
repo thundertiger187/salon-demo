@@ -150,6 +150,12 @@
     return { ok: true, booking: b };
   }
   function cancel(id) { var s = load(); s.bookings.forEach(function (b) { if (b.id === id && b.mine) { b.status = 'cancelled'; b.cancelledAt = new Date().toISOString(); } }); save(s); }
+  /* Versand an den Salon merken (WhatsApp/SMS-Link angetippt): kind 'request' | 'cancel', via 'whatsapp' | 'sms' */
+  function markSent(id, kind, via) {
+    var s = load(), hit = null;
+    s.bookings.forEach(function (b) { if (b.id === id && b.mine) { b.sent = b.sent || {}; b.sent[kind] = { via: via, at: new Date().toISOString() }; hit = b; } });
+    if (hit) save(s); return hit;
+  }
   function get(id) { return load().bookings.filter(function (b) { return b.id === id; })[0] || null; }
   function mine(now) {
     now = now || new Date();
@@ -183,5 +189,5 @@
   root.SB = { WD: WD, WD_SHORT: WD_SHORT, MONTHS: MONTHS, pad: pad, toISO: toISO, fromISO: fromISO, todayISO: todayISO, addDays: addDays, weekday: weekday, hm: hm,
     fmtTime: fmtTime, fmtTimeShort: fmtTimeShort, fmtDate: fmtDate, dateTime: dateTime, durTxt: durTxt, stepFor: stepFor, euro: euro, service: service, stylist: stylist, intervals: intervals, isOpenDay: isOpenDay,
     worksOn: worksOn, openState: openState, load: load, save: save, seed: seed, freeSlots: freeSlots, nextFree: nextFree, validName: validName, validPhone: validPhone,
-    book: book, cancel: cancel, get: get, mine: mine, pastMine: pastMine, ics: ics };
+    book: book, cancel: cancel, markSent: markSent, get: get, mine: mine, pastMine: pastMine, ics: ics };
 })(window);

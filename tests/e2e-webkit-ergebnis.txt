@@ -1,4 +1,4 @@
-WebKit iPhone 14 – 18/18 bestanden
+WebKit iPhone 14 – 20/20 bestanden
 OK   WebKit/iPhone 14: Seite lädt – {'width': 390, 'height': 664} UA iPhone
 OK   apple-touch-icon 180x180 lädt
 OK   iOS-Meta-Tags vorhanden – ['yes', 'yes', 'default', 'Da Giovanni', '#F6F1EA']
@@ -15,5 +15,7 @@ OK   kein Überlauf (termine) – [390, 390]
 OK   Bewertungs-Karte (iOS) mit Schreib-Link
 OK   Buchung in WebKit – 09:00
 OK   Bewertungs-Bitte nach Buchung (iOS)
+OK   iOS: WhatsApp-Link wa.me + SMS-Link sms:+…?&body= – sms:+49211241886?&body=Hallo%20Haardesign%20Da%20Giovanni%2C
+OK   kein Überlauf (Senden-Box) – [390, 390]
 OK   Standalone (navigator.standalone): kein Install-Hinweis
 OK   Keine Konsolen-/Seitenfehler (WebKit) – []

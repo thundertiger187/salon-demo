@@ -19,7 +19,16 @@ window.SALON_CONFIG = {
   },
   phone: '0211 241886',                 // Anzeige
   phoneTel: '+49211241886',             // für tel:-Links
-  whatsapp: '',                         // WhatsApp-Nummer unbekannt → Link ausgeblendet (z. B. '+49211241886' eintragen)
+  // Termin per WhatsApp / SMS an den Salon senden (Demo ohne Server: erst diese Nachricht erreicht den Salon).
+  // Nummern international, NUR Ziffern, ohne + und ohne führende 0 (z. B. 0171 2345678 → '491712345678').
+  // !!! PLATZHALTER: aktuell steht hier die FESTNETZNUMMER des Salons (0211 241886). Festnetznummern können
+  // !!! in der Regel KEIN WhatsApp und meist keine SMS empfangen → vor dem Livegang die echte WhatsApp-/Handynummer
+  // !!! eintragen und placeholder auf false setzen.
+  contact: {
+    whatsapp: '49211241886',            // PLATZHALTER – echte WhatsApp-(Business-)Nummer eintragen
+    sms: '49211241886',                 // PLATZHALTER – echte Handynummer für SMS eintragen
+    placeholder: true                   // true = Nummern noch nicht bestätigt → WhatsApp-Link auf der Kontaktseite bleibt ausgeblendet
+  },
   facebook: 'https://www.facebook.com/HaardesignDaGiovanni/',
   email: '',                            // PLATZHALTER E-Mail (leer = ausgeblendet)
   owner: '[Inhaber:in Vor- und Nachname]', // PLATZHALTER für Impressum

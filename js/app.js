@@ -20,6 +20,7 @@
     team: ic('<circle cx="9" cy="9" r="3"/><circle cx="16" cy="10" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 19a4.5 4.5 0 0 1 7 0"/>'),
     dl: ic('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'),
     x: ic('<path d="M6 6l12 12M18 6L6 18"/>'),
+    sms: ic('<path d="M4 5.5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5V17.5H4a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><path d="M7.5 10h9M7.5 13.5h6"/>'),
     pen: ic('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
     install: ic('<path d="M12 3v12M7 10l5 5 5-5"/><rect x="4" y="17" width="16" height="4" rx="1.5"/>')
   };
@@ -59,6 +60,46 @@
   function footLinks() {
     return '<div class="foot-links"><a href="#impressum">Impressum</a><a href="#datenschutz">Datenschutz</a>' + (C.facebook ? '<a href="' + esc(C.facebook) + '" target="_blank" rel="noopener">Facebook</a>' : '') + '</div>';
   }
+
+  /* ---------------- Termin per WhatsApp / SMS an den Salon ----------------
+     Die Demo hat keinen Server: eine Buchung erreicht den Salon erst, wenn die
+     vorausgefüllte Nachricht in WhatsApp bzw. der SMS-App abgeschickt wird. */
+  var K = C.contact || {};
+  var waNum = String(K.whatsapp || '').replace(/\D/g, ''), smsNum = String(K.sms || '').replace(/\D/g, '');
+  var VIA = { whatsapp: 'WhatsApp', sms: 'SMS' };
+  function dateFull(iso) { var d = S.fromISO(iso); return S.WD_SHORT[d.getDay()] + ', ' + S.pad(d.getDate()) + '.' + S.pad(d.getMonth() + 1) + '.' + d.getFullYear(); }
+  function msgText(b, kind) {
+    var s = S.service(b.serviceId), st = S.stylist(b.staffId);
+    var bei = b.staffChoice === 'any' || !st ? 'egal' : st.name;
+    var lines = [kind === 'cancel' ? 'Hallo ' + C.name + ', leider muss ich meinen Termin absagen:' : 'Hallo ' + C.name + ', ich habe über die App einen Termin angefragt:',
+      'Leistung: ' + (s ? s.name : 'Termin'), 'Bei: ' + bei, 'Datum: ' + dateFull(b.date), 'Uhrzeit: ' + S.fmtTime(b.start) + ' Uhr', 'Name: ' + b.name, 'Telefon: ' + b.phone];
+    if (kind !== 'cancel' && b.note) lines.push('Hinweis: ' + b.note);
+    lines.push(kind === 'cancel' ? 'Vielen Dank und viele Grüße!' : 'Bitte kurz bestätigen. Danke!');
+    return lines.join('\n');
+  }
+  function waHref(t) { return 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(t); }
+  function smsHref(t) { return 'sms:+' + smsNum + '?&body=' + encodeURIComponent(t); } // „?&body=“ funktioniert auf Android und iOS
+  function sentLine(b, kind) {
+    var x = b.sent && b.sent[kind]; if (!x) return '';
+    var d = new Date(x.at);
+    return I.check + '<span><b>' + (kind === 'cancel' ? 'Absage gesendet' : 'Anfrage gesendet') + '</b> per ' + VIA[x.via] + ' · ' + S.pad(d.getDate()) + '.' + S.pad(d.getMonth() + 1) + '., ' + S.pad(d.getHours()) + ':' + S.pad(d.getMinutes()) + ' Uhr</span>';
+  }
+  var DEMO_NUM = K.placeholder ? ' <span class="send-demo">(Demo: Zielnummer ist noch ein Platzhalter.)</span>' : '';
+  var SEND_HINT = '<b>Wichtig:</b> Ihre Anfrage erreicht den Salon erst, wenn Sie die vorbereitete Nachricht abschicken – diese Demo hat keinen Server.' + DEMO_NUM;
+  var CANCEL_HINT = 'Die Stornierung gilt nur in dieser App. Bitte sagen Sie dem Salon kurz Bescheid.' + DEMO_NUM;
+  /* kind: 'request' | 'cancel'; hintId: id eines vorhandenen Hinweises (kompakte Variante in „Meine Termine“) */
+  function sendBox(b, kind, hintId) {
+    if (!waNum && !smsNum) return '';
+    var t = msgText(b, kind), compact = !!hintId, hid = hintId || 'send-hint-' + kind + '-' + b.id, sz = compact ? '' : ' btn-lg', x = b.sent && b.sent[kind], c = kind === 'cancel';
+    var attrs = ' data-kind="' + kind + '" data-id="' + esc(b.id) + '" aria-describedby="' + hid + '"';
+    return '<div class="send-box' + (compact ? ' compact' : '') + (c ? ' cancel' : '') + (x ? ' is-sent' : '') + '" data-sendbox="' + kind + '">' +
+      (compact ? '' : '<b class="send-t">' + (c ? 'Absage an den Salon senden' : 'Termin an den Salon senden') + '</b><p class="send-hint" id="' + hid + '">' + (c ? CANCEL_HINT : SEND_HINT) + '</p>') +
+      '<div class="send-btns">' +
+      (waNum ? '<a class="btn btn-wa btn-block' + sz + '" href="' + esc(waHref(t)) + '" target="_blank" rel="noopener" data-send="whatsapp"' + attrs + '>' + I.wa + (c ? 'Absage per WhatsApp senden' : 'Per WhatsApp an den Salon senden') + '<span class="sr-only"> (öffnet WhatsApp)</span></a>' : '') +
+      (smsNum ? '<a class="btn btn-ghost btn-block' + sz + '" href="' + esc(smsHref(t)) + '" data-send="sms"' + attrs + '>' + I.sms + (c ? 'Absage per SMS senden' : 'Per SMS senden') + '<span class="sr-only"> (öffnet die SMS-App)</span></a>' : '') +
+      '</div><p class="send-status" role="status">' + sentLine(b, kind) + '</p></div>';
+  }
+  var lastCancelled = null; // für den Absage-Hinweis in „Meine Termine“
 
   // Texte aus der Konfiguration
   document.title = C.name + ' – ' + C.claim;
@@ -118,7 +159,7 @@
     $('#v-kontakt').innerHTML = '<div class="sec-head"><h1>Anfahrt &amp; Kontakt</h1></div>' +
       '<div class="contact-list">' +
         '<a class="c-item" href="' + telHref + '" id="k-call"><span class="ico">' + I.phone + '</span><span class="grow"><span class="t">' + esc(C.phone) + '</span><span class="s">Anrufen – Termine auch telefonisch</span></span>' + I.chev + '</a>' +
-        (C.whatsapp ? '<a class="c-item" href="https://wa.me/' + C.whatsapp.replace(/\D/g, '') + '" target="_blank" rel="noopener"><span class="ico wa">' + I.wa + '</span><span class="grow"><span class="t">WhatsApp</span><span class="s">Nachricht schreiben</span></span>' + I.chev + '</a>' : '') +
+        (waNum && !K.placeholder ? '<a class="c-item" href="https://wa.me/' + waNum + '" target="_blank" rel="noopener" id="k-wa"><span class="ico wa">' + I.wa + '</span><span class="grow"><span class="t">WhatsApp</span><span class="s">Nachricht schreiben</span></span>' + I.chev + '</a>' : '') +
         '<a class="c-item" href="' + mapsHref + '" target="_blank" rel="noopener" id="k-addr"><span class="ico">' + I.pin + '</span><span class="grow"><span class="t">' + esc(A.street) + '</span><span class="s">' + esc(A.zip + ' ' + A.city) + '</span></span>' + I.ext + '</a>' +
         (C.facebook ? '<a class="c-item" href="' + esc(C.facebook) + '" target="_blank" rel="noopener" id="k-fb"><span class="ico">' + I.fb + '</span><span class="grow"><span class="t">Facebook</span><span class="s">Neuigkeiten &amp; Bilder</span></span>' + I.ext + '</a>' : '') +
         (C.email ? '<a class="c-item" href="mailto:' + esc(C.email) + '"><span class="ico">' + I.mail + '</span><span class="grow"><span class="t">' + esc(C.email) + '</span><span class="s">E-Mail schreiben</span></span>' + I.chev + '</a>' : '') +
@@ -154,7 +195,8 @@
       '<p><b>' + esc(C.name) + '</b><br>' + esc(C.owner) + '<br>' + esc(A.street) + '<br>' + esc(A.zip + ' ' + A.city) + '</p><p>Telefon: ' + esc(C.phone) + (C.email ? '<br>E-Mail: ' + esc(C.email) : '<br>E-Mail: [E-Mail-Adresse]') + '</p><p>USt-IdNr.: ' + esc(C.taxId) + '</p>' +
       '<h3>Berufsbezeichnung</h3><p>[Friseurmeister:in, Handwerkskammer …]</p></div>';
     $('#v-datenschutz').innerHTML = '<a class="b-back" href="#start">' + I.back + 'Zurück</a><h1>Datenschutz</h1><div class="legal"><div class="notice warn">' + I.info + '<div><strong>Platzhalter</strong> – vor Veröffentlichung durch eine vollständige Datenschutzerklärung ersetzen.</div></div>' +
-      '<p>Diese Demo speichert Buchungsdaten (Name, Telefonnummer, Hinweis) <b>ausschließlich lokal auf diesem Gerät</b> (localStorage). Es werden keine Daten an den Salon oder Dritte übertragen.</p>' +
+      '<p>Diese Demo speichert Buchungsdaten (Name, Telefonnummer, Hinweis) <b>ausschließlich lokal auf diesem Gerät</b> (localStorage). Es werden keine Daten automatisch an den Salon oder Dritte übertragen.</p>' +
+      '<p>Nur wenn Sie selbst auf <b>„Per WhatsApp an den Salon senden“</b> bzw. <b>„Per SMS senden“</b> tippen, öffnet sich WhatsApp bzw. Ihre SMS-App mit einer vorausgefüllten Nachricht (Leistung, Termin, Name, Telefon, ggf. Hinweis). Versendet wird erst, wenn Sie dort auf Senden tippen; bei WhatsApp wird die Nachricht über WhatsApp (Meta) übermittelt.</p>' +
       '<p>Auf der Kontaktseite wird eine Karte von OpenStreetMap eingebunden; dabei wird Ihre IP-Adresse an die OpenStreetMap Foundation übertragen. Links zu Google Maps, Google-Bewertungen und Facebook öffnen externe Dienste (Google bzw. Meta); die Bewertungsangaben (Sterne, Anzahl) sind ein fester Stand ohne Datenabruf bei Google.</p>' +
       '<p><button class="btn btn-danger btn-sm" type="button" id="wipe">Alle Demo-Daten auf diesem Gerät löschen</button></p></div>';
   }
@@ -264,11 +306,11 @@
     var b = S.get(B.lastId);
     if (!b) { go('service'); return; }
     if (b.status === 'cancelled') {
-      $('#v-buchen').innerHTML = DEMO_BANNER + '<div class="done-ico bad">' + I.x + '</div><div class="center"><h1>Termin storniert</h1><p class="muted" style="margin-top:8px">Der Termin am ' + esc(S.fmtDate(b.date, true)) + ' um ' + S.fmtTime(b.start) + ' Uhr wurde storniert. Die Zeit ist wieder frei.</p></div>' +
+      $('#v-buchen').innerHTML = DEMO_BANNER + '<div class="done-ico bad">' + I.x + '</div><div class="center"><h1>Termin storniert</h1><p class="muted" style="margin-top:8px">Der Termin am ' + esc(S.fmtDate(b.date, true)) + ' um ' + S.fmtTime(b.start) + ' Uhr wurde storniert. Die Zeit ist wieder frei.</p></div>' + sendBox(b, 'cancel') +
         '<button class="btn btn-primary btn-lg btn-block" type="button" data-restart>Neuen Termin buchen</button>';
       return;
     }
-    $('#v-buchen').innerHTML = DEMO_BANNER + '<div class="done-ico">' + I.check + '</div><div class="center"><h1>Termin gebucht!</h1><p class="muted" style="margin-top:8px">Wir freuen uns auf Sie, ' + esc(b.name.split(' ')[0]) + '.</p></div>' + summaryHtml(b) +
+    $('#v-buchen').innerHTML = DEMO_BANNER + '<div class="done-ico">' + I.check + '</div><div class="center"><h1>Termin gebucht!</h1><p class="muted" style="margin-top:8px">Wir freuen uns auf Sie, ' + esc(b.name.split(' ')[0]) + '.</p></div>' + summaryHtml(b) + sendBox(b, 'request') +
       '<button class="btn btn-primary btn-lg btn-block" type="button" data-ics="' + b.id + '">' + I.dl + 'In Kalender eintragen</button>' +
       '<div id="cancel-zone"><button class="btn btn-danger btn-lg btn-block" type="button" data-cancel="' + b.id + '">' + I.x + 'Termin stornieren</button></div>' +
       '<a class="btn btn-ghost btn-lg btn-block" href="#termine">Meine Termine</a>' +
@@ -277,12 +319,18 @@
 
   /* ---------------- Meine Termine ---------------- */
   function rTermine() {
-    var list = S.mine(), past = S.pastMine();
+    var list = S.mine(), past = S.pastMine(), lc = lastCancelled && S.get(lastCancelled);
+    if (lc && lc.status !== 'cancelled') lc = null;
     $('#v-termine').innerHTML = DEMO_BANNER + '<div class="sec-head"><h1>Meine Termine</h1><p class="muted small">Ihre auf diesem Gerät gebuchten Termine.</p></div>' +
+      (lc ? '<div class="cancel-note" id="cancel-note"><div class="cancel-note-h"><b>Termin storniert</b><button class="icon-btn" type="button" data-dismiss-cancel aria-label="Hinweis schließen">' + I.x + '</button></div>' +
+        '<span class="small">' + esc(dateFull(lc.date)) + ', ' + S.fmtTime(lc.start) + ' Uhr · ' + esc((S.service(lc.serviceId) || {}).name || 'Termin') + '</span>' +
+        '<span class="small">' + (lc.sent && lc.sent.request ? 'Sie hatten die Anfrage bereits an den Salon gesendet – bitte sagen Sie kurz ab.' : 'Falls Sie die Anfrage schon an den Salon gesendet haben, sagen Sie bitte kurz ab.') + '</span>' + sendBox(lc, 'cancel') + '</div>' : '') +
+      (list.length && (waNum || smsNum) ? '<div class="notice send-note" id="send-hint-termine">' + I.info + '<div>' + SEND_HINT + '</div></div>' : '') +
       (list.length ? list.map(function (b) {
         var s = S.service(b.serviceId), st = S.stylist(b.staffId);
         return '<div class="mine-item" data-mine="' + b.id + '"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>' + esc(S.fmtDate(b.date, true)) + '</b><span class="badge ok">' + S.fmtTime(b.start) + ' Uhr</span></div>' +
           '<div class="muted small">' + esc(s.name) + ' · ' + S.durTxt(b.duration) + ' · bei ' + esc(st ? st.name : 'Team') + '</div>' +
+          sendBox(b, 'request', 'send-hint-termine') +
           '<div class="acts"><button class="btn btn-ghost btn-sm" type="button" data-ics="' + b.id + '">' + I.dl + 'Kalender</button><span class="cz" style="display:contents"><button class="btn btn-danger btn-sm" type="button" data-cancel="' + b.id + '">Stornieren</button></span></div></div>';
       }).join('') : '<div class="empty"><span>Noch keine kommenden Termine auf diesem Gerät.</span><a class="btn btn-primary" href="#buchen">' + I.cal + 'Termin buchen</a></div>') +
       (past.length ? '<div class="sec-head" style="margin-top:6px"><h2>Vergangene Termine</h2></div>' + reviewPrompt('rev-past') + past.map(function (b) {
@@ -305,6 +353,7 @@
     document.querySelectorAll('.view').forEach(function (v) { v.classList.toggle('active', v.getAttribute('data-view') === name); });
     document.querySelectorAll('[data-nav]').forEach(function (a) { var on = a.getAttribute('data-nav') === name; a.classList.toggle('active', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     if (name !== 'buchen') setFoot('');
+    if (name !== 'termine') lastCancelled = null;
     RENDER[name]();
     window.scrollTo(0, 0);
   }
@@ -313,6 +362,13 @@
   /* ---------------- Klicks ---------------- */
   document.addEventListener('click', function (e) {
     var t;
+    if ((t = e.target.closest('[data-send]'))) {
+      // Link (WhatsApp/SMS) normal öffnen lassen, nur „gesendet“ merken und anzeigen
+      var kind = t.getAttribute('data-kind'), sb = S.markSent(t.getAttribute('data-id'), kind, t.getAttribute('data-send')), box = t.closest('.send-box');
+      if (sb && box) { box.classList.add('is-sent'); box.querySelector('.send-status').innerHTML = sentLine(sb, kind); }
+      return;
+    }
+    if ((t = e.target.closest('[data-dismiss-cancel]'))) { lastCancelled = null; rTermine(); return; }
     if ((t = e.target.closest('[data-cat]'))) { var c = t.getAttribute('data-cat'); e.preventDefault(); if (current !== 'leistungen') location.hash = '#leistungen'; setTimeout(function () { var el = document.getElementById('cat-' + c); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30); return; }
     if ((t = e.target.closest('[data-service]'))) { B.serviceId = t.getAttribute('data-service'); B.time = null; B.date = null; go('staff'); return; }
     if ((t = e.target.closest('[data-staff]'))) { B.staffId = t.getAttribute('data-staff'); B.time = null; B.date = null; go('time'); return; }
@@ -329,7 +385,7 @@
       return;
     }
     if ((t = e.target.closest('[data-keep]'))) { RENDER[current](); return; }
-    if ((t = e.target.closest('[data-cancel-yes]'))) { S.cancel(t.getAttribute('data-cancel-yes')); updateCount(); toast('Termin storniert'); RENDER[current](); return; }
+    if ((t = e.target.closest('[data-cancel-yes]'))) { lastCancelled = t.getAttribute('data-cancel-yes'); S.cancel(lastCancelled); updateCount(); toast('Termin storniert'); RENDER[current](); return; }
     if ((t = e.target.closest('[data-install]')) || (t = e.target.closest('#install-btn'))) { doInstall(); return; }
     if ((t = e.target.closest('#wipe'))) { localStorage.removeItem(C.storageKey); B.lastId = null; B.step = 'service'; updateCount(); toast('Demo-Daten gelöscht'); return; }
   });
@@ -386,5 +442,5 @@
   setInterval(function () { if (current === 'start' || current === 'zeiten') RENDER[current](); }, 60000);
 
   state(); updateCount(); net(); route();
-  window.SalonApp = { B: B, go: go };
+  window.SalonApp = { B: B, go: go, msgText: msgText, waHref: waHref, smsHref: smsHref };
 })();
