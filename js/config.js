@@ -77,7 +77,7 @@ window.SALON_CONFIG = {
     { id: 'd-schnitt', cat: 'Damen', name: 'Waschen, Schneiden, Föhnen', duration: 60, price: 49, from: true },
     { id: 'd-foehnen', cat: 'Damen', name: 'Waschen & Föhnen / Styling', duration: 30, price: 29, from: true },
     { id: 'd-spitzen', cat: 'Damen', name: 'Spitzen schneiden', duration: 30, price: 25 },
-    { id: 'h-schnitt', cat: 'Herren', name: 'Herrenschnitt inkl. Waschen', duration: 30, price: 26 },
+    { id: 'h-schnitt', cat: 'Herren', name: 'Herrenschnitt inkl. Waschen', duration: 30, price: 27 },
     { id: 'h-maschine', cat: 'Herren', name: 'Maschinenschnitt', duration: 15, price: 16 },
     { id: 'h-bart', cat: 'Herren', name: 'Bart trimmen & konturieren', duration: 15, price: 12 },
     { id: 'k-bis6', cat: 'Kinder', name: 'Kinderschnitt bis 6 Jahre', duration: 15, price: 14 },
