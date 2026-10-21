@@ -69,32 +69,49 @@ window.SALON_CONFIG = {
   ],
 
   // Leistungen & Preise (BEISPIELPREISE). duration in Minuten (Vielfache von 15), from: true = "ab"-Preis.
-  // Startzeiten-Raster pro Leistung: optional step (Minuten). Ohne step gilt:
+  // lengths = Dauer je Haarlänge (kurz / mittel / lang, VORLÄUFIGE Platzhalter, Vielfache von 15). Fehlt lengths,
+  // ist die Leistung unabhängig von der Haarlänge (z. B. Bart, Maschinenschnitt, Kinder bis 6) – dann gilt duration.
+  // Der Team-Kalender (Inhaber) kann die Dauern ändern; läuft er im selben Browser, übernimmt diese App sie automatisch.
+  // Startzeiten-Raster pro Leistung: optional step (Minuten). Ohne step gilt (für die jeweilige Dauer):
   //   Dauer <= 15 Min. → alle 15 Min. (:00/:15/:30/:45) · Dauer >= 30 Min. → alle 30 Min. (nur :00/:30)
   // Beispiel für Abweichung: { …, duration: 60, step: 60 } → nur volle Stunden.
   priceNote: 'Beispielpreise – die tatsächlichen Preise erfahren Sie im Salon.',
   services: [
-    { id: 'd-schnitt', cat: 'Damen', name: 'Waschen, Schneiden, Föhnen', duration: 60, price: 49, from: true },
-    { id: 'd-foehnen', cat: 'Damen', name: 'Waschen & Föhnen / Styling', duration: 30, price: 29, from: true },
-    { id: 'd-spitzen', cat: 'Damen', name: 'Spitzen schneiden', duration: 30, price: 25 },
-    { id: 'h-schnitt', cat: 'Herren', name: 'Herrenschnitt inkl. Waschen', duration: 30, price: 27 },
+    { id: 'd-schnitt', cat: 'Damen', name: 'Waschen, Schneiden, Föhnen', duration: 60, lengths: { kurz: 45, mittel: 60, lang: 90 }, price: 49, from: true },
+    { id: 'd-foehnen', cat: 'Damen', name: 'Waschen & Föhnen / Styling', duration: 30, lengths: { kurz: 30, mittel: 45, lang: 60 }, price: 29, from: true },
+    { id: 'd-spitzen', cat: 'Damen', name: 'Spitzen schneiden', duration: 30, lengths: { kurz: 30, mittel: 30, lang: 45 }, price: 25 },
+    { id: 'h-schnitt', cat: 'Herren', name: 'Herrenschnitt inkl. Waschen', duration: 30, lengths: { kurz: 30, mittel: 30, lang: 45 }, price: 27 },
     { id: 'h-maschine', cat: 'Herren', name: 'Maschinenschnitt', duration: 15, price: 16 },
     { id: 'h-bart', cat: 'Herren', name: 'Bart trimmen & konturieren', duration: 15, price: 12 },
     { id: 'k-bis6', cat: 'Kinder', name: 'Kinderschnitt bis 6 Jahre', duration: 15, price: 14 },
-    { id: 'k-bis12', cat: 'Kinder', name: 'Kinderschnitt 7–12 Jahre', duration: 30, price: 19 },
-    { id: 'f-ansatz', cat: 'Farbe', name: 'Ansatzfarbe inkl. Föhnen', duration: 90, price: 59, from: true },
-    { id: 'f-komplett', cat: 'Farbe', name: 'Färben komplett inkl. Schnitt', duration: 120, price: 89, from: true },
-    { id: 'f-straehnen', cat: 'Farbe', name: 'Strähnen / Balayage', duration: 180, price: 109, from: true },
-    { id: 's-hochsteck', cat: 'Styling', name: 'Hochsteckfrisur', duration: 60, price: 45, from: true },
-    { id: 's-pflege', cat: 'Styling', name: 'Pflegekur / Haarbehandlung', duration: 15, price: 12 }
+    { id: 'k-bis12', cat: 'Kinder', name: 'Kinderschnitt 7–12 Jahre', duration: 30, lengths: { kurz: 30, mittel: 30, lang: 45 }, price: 19 },
+    { id: 'f-ansatz', cat: 'Farbe', name: 'Ansatzfarbe inkl. Föhnen', duration: 90, lengths: { kurz: 90, mittel: 105, lang: 120 }, price: 59, from: true },
+    { id: 'f-komplett', cat: 'Farbe', name: 'Färben komplett inkl. Schnitt', duration: 120, lengths: { kurz: 120, mittel: 135, lang: 150 }, price: 89, from: true },
+    { id: 'f-straehnen', cat: 'Farbe', name: 'Strähnen / Balayage', duration: 180, lengths: { kurz: 150, mittel: 180, lang: 210 }, price: 109, from: true },
+    { id: 's-hochsteck', cat: 'Styling', name: 'Hochsteckfrisur', duration: 60, lengths: { kurz: 45, mittel: 60, lang: 90 }, price: 45, from: true },
+    { id: 's-pflege', cat: 'Styling', name: 'Pflegekur / Haarbehandlung', duration: 15, lengths: { kurz: 15, mittel: 15, lang: 30 }, price: 12 }
   ],
+  // Haarlängen-Auswahl beim Buchen (Beschreibung je Kategorie, damit Herren/Kinder passende Beispiele sehen)
+  hairLengths: [
+    { id: 'kurz', label: 'Kurz', desc: { _: 'bis Kinnlänge', Herren: 'klassisch kurz, Ohren frei', Kinder: 'kurz, Ohren frei' } },
+    { id: 'mittel', label: 'Mittel', desc: { _: 'bis zur Schulter', Herren: 'über die Ohren', Kinder: 'bis Kinnlänge' } },
+    { id: 'lang', label: 'Lang', desc: { _: 'länger als schulterlang', Herren: 'bis zum Kragen oder länger', Kinder: 'schulterlang oder länger' } }
+  ],
+  lengthHint: 'Die Dauer wird je nach Haarlänge berechnet, damit wir genug Zeit für Sie einplanen.',
 
   booking: {
     daysAhead: 14,        // buchbar für die nächsten 14 Tage
     // Startzeiten-Raster: pro Leistung (services[].step bzw. Standardregel oben), letzte Startzeit so, dass die Leistung bis Ladenschluss fertig ist
     leadMinutes: 60,      // frühestens 60 Min. ab jetzt
-    seedDemoBookings: true // belegt in der Demo einige Zeiten mit Beispielterminen
+    seedDemoBookings: true, // belegt in der Demo einige Zeiten mit Beispielterminen
+    // 'anfrage' = Kund:in sendet einen Terminwunsch, der Salon bestätigt oder schlägt eine andere Zeit vor (Standard)
+    // 'sofort'  = Termin ist sofort fest gebucht (wie bisher). Stellt der Inhaber im Team-Kalender um und läuft
+    //             der Team-Kalender im selben Browser (gleiche Adresse thundertiger187.github.io), gilt dessen Einstellung.
+    mode: 'anfrage'
   },
+  // Gemeinsamer Speicher mit dem Team-Kalender (gleiche Herkunft = gleicher localStorage, nur im selben Browser/Gerät):
+  // Terminwünsche, Status, Modus, Dauern und freie Zeiten. Ohne Team-Kalender im selben Browser arbeitet die App allein.
+  bridgeKey: 'dg-bridge-v1',
   // Terminerinnerungen an die Kundin (2 Tage + 2 Stunden vorher). In der Demo nur Planung + Vorschau –
   // der echte Versand braucht einen Server mit WhatsApp Business API bzw. SMS-Anbieter (siehe README).
   reminders: {

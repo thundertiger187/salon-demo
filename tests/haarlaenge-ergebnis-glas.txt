@@ -1,0 +1,39 @@
+Haarlänge/Anfrage (Glas) 2026-10-21 17:42 – 38/38 bestanden
+OK   Design glass
+OK   Service Worker VERSION v8
+OK   Leistungen: Dauer je Haarlänge als Spanne + Hinweis
+OK   Herrenschnitt bleibt 27 €
+OK   Hinweis an der Leistungsauswahl (exakter Text) – Die Dauer wird je nach Haarlänge berechnet, damit wir genug Zeit für Sie einplanen.
+OK   Modus-Hinweis „Anfrage“ (Standard aus Konfiguration)
+OK   Keine Haarlänge bei Bart / Maschine / Kinder bis 6
+OK   Bart → direkt Mitarbeiter-Auswahl (kein Haarlängen-Schritt)
+OK   Damen: Haarlänge kurz/mittel/lang = 45/60/90 Min. + Hinweis – [45, 60, 90]
+OK   kein horizontales Überlaufen (haarlaenge) – [390, 390]
+OK   Hinweis „nur Zeiten, in die der ganze Termin passt“ – Angezeigt werden nur Startzeiten, in die die ganze Dauer (1,5 Std.) passt.
+OK   Lang: weniger Startzeiten als kurz, alle Teil von kurz – {'Tag': '2026-10-23', 'kurz': 10, 'lang': 6}
+OK   Jede angezeigte Zeit: ganze Dauer frei (Öffnungszeit + Termine), keine passende fehlt – {'langOk': True, 'kurzOk': True, 'subset': True, 'grid': True, 'missing': []}
+OK   Raster :00/:30 für ≥ 30 Min.
+OK   Angaben: Haarlänge + „Wunschtermin“ + Erklärung, Knopf „Terminwunsch senden“
+OK   Bestätigungsseite: „Terminwunsch gesendet“ + Status „Angefragt“
+OK   Erinnerungen erst nach Bestätigung (keine geplanten Zeiten, kein .ics)
+OK   Keine WhatsApp/SMS-Links an den Salon
+OK   Anfrage im gemeinsamen Speicher: angefragt, d-schnitt, lang, 90 Min. – {'status': 'angefragt', 'length': 'lang', 'duration': 90, 'date': '2026-10-27', 'start': 540, 'staffId': 'giovanni'}
+OK   Demo-Knopf „Demo: Salon bestätigt“ sichtbar
+OK   kein horizontales Überlaufen (angefragt) – [390, 390]
+OK   Meine Termine: Status „angefragt“
+OK   Demo bestätigt → Status bestätigt (Buchung + Speicher), Erinnerungen jetzt geplant – ['bestaetigt', 2, 'bestaetigt']
+OK   Meine Termine: „bestätigt“, Kalender-Knopf, Erinnerungen
+OK   Demo: Salon schlägt andere Zeit vor → „verschoben“ + Vorschlag mit Annehmen/Ablehnen
+OK   Vorschlag angenommen → bestätigt mit neuer Zeit (auch im Speicher, „kunde“) – {'req': 'bestaetigt', 'date': '2026-10-27', 'start': 660, 'rs': 'bestaetigt', 'rd': '2026-10-27', 'rst': 660, 'by': 'kunde'}
+OK   Leistung ohne Haarlänge: Dauer 15 Min., length leer
+OK   Terminwunsch zurückziehen → Speicher „storniert“ (kunde)
+OK   Bestätigung aus anderem Tab (storage-Event): „Termin bestätigt!“ + Hinweis – Termin bestätigt!
+OK   Salon storniert → Buchung storniert
+OK   Modus „Sofortbuchung“ aus Team-Einstellung – team
+OK   Dauer-Änderung des Inhabers übernommen (Herren 30/45/60) – [30, 45, 60]
+OK   Sofortbuchung: Knopf „Verbindlich buchen“
+OK   Sofortbuchung: „Termin gebucht!“, sofort bestätigt, Erinnerungen geplant, Dauer 60
+OK   Team-Verfügbarkeit: kurz nur 10:00 + 12:00 (Termin 11–12 belegt, Ende 13:00), lang nichts – {'kurz': ['600:giovanni', '720:giovanni'], 'lang': [], 'other': 0, 'linked': True}
+OK   kein horizontales Überlaufen (termine) – [390, 390]
+OK   kein horizontales Überlaufen (360 haarlaenge) – [360, 360]
+OK   Keine Konsolenfehler / Seitenfehler / 404 – []

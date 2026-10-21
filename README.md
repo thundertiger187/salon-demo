@@ -7,7 +7,20 @@ Reine statische Dateien – kein Server, keine Datenbank, keine externen CDNs (n
 „Jetzt geöffnet/geschlossen“), Anfahrt & Kontakt (Anrufen, Google Maps, Facebook, OSM-Karte), Online-Buchung (Demo),
 Meine Termine, **Terminerinnerungen per WhatsApp/SMS (Demo)**, Impressum/Datenschutz (Platzhalter). Funktioniert nach dem ersten Aufruf auch **offline** und lässt sich als App installieren.
 
-> **Demo:** Buchungen werden nur im Browser des jeweiligen Geräts gespeichert (localStorage) – der Salon bekommt sie nicht.
+> **Demo:** Buchungen werden im Browser gespeichert (localStorage). Mit dem Team-Kalender werden sie **nur im selben Browser auf demselben Gerät** abgeglichen (gleicher Ursprung `thundertiger187.github.io`, Schlüssel `dg-bridge-v1`) – kein Server. Auf einem anderen Handy kommt nichts im Salon an.
+
+## Haarlänge & Terminwunsch (ab v8)
+
+- **Dauer nach Haarlänge:** Nach der Leistung wählt die Kundin *Kurz / Mittel / Lang* (nicht bei Bart, Maschinenschnitt, Kinder bis 6).
+  Hinweis: „Die Dauer wird je nach Haarlänge berechnet, damit wir genug Zeit für Sie einplanen.“ Es werden nur Startzeiten gezeigt,
+  in die die **ganze** Dauer passt (Raster :00/:30 ab 30 Min., Viertelstunden bei 15-Min.-Leistungen). Preise bleiben pro Leistung („ab“).
+- **Standard-Dauern** (Min., kurz/mittel/lang): Damenhaarschnitt 45/60/90 · Waschen & Föhnen 30/45/60 · Spitzen 30/30/45 · Herrenschnitt 30/30/45 ·
+  Kinder bis 12 30/30/45 · Ansatzfarbe 90/105/120 · Komplettfarbe 120/135/150 · Strähnen 150/180/210 · Hochsteckfrisur 45/60/90 · Pflegekur 15/15/30.
+  Ändert der Inhaber die Dauern im Team-Kalender, übernimmt die Kunden-App sie (gleicher Browser).
+- **Anfrage-Modus (Standard):** „Terminwunsch senden“ → Status *angefragt*; der Salon bestätigt oder schlägt eine andere Zeit vor (*verschoben*, Kundin nimmt an oder lehnt ab).
+  Erinnerungen + Kalender-Datei erst nach Bestätigung. Demo-Knöpfe „Demo: Salon bestätigt“ / „Demo: anderer Termin“. Keine Übermittlung per WhatsApp/SMS.
+- **Sofortbuchung:** schaltet der Inhaber im Team-Kalender um; dann wie bisher „Termin gebucht!“. Ohne Team-Daten gilt `bookingMode` aus `js/config.js` (Standard `anfrage`).
+- Tests: `PORT=8766 python3 tests/haarlaenge.py` (auch `THEME=glass`).
 > Einige Zeiten sind mit Beispielterminen belegt, damit die Slot-Auswahl realistisch aussieht.
 
 ## Daten anpassen – alles in `js/config.js`
@@ -121,7 +134,7 @@ Lighthouse (mobil): Performance 98, Barrierefreiheit 100, Best Practices 100, SE
 (Lighthouse 12 hat keine PWA-Kategorie mehr; Installierbarkeit wird im E2E-Test über Chrome `Page.getInstallabilityErrors` geprüft → keine Fehler.)
 
 ## Grenzen der Demo
-- Buchungen sind nur lokal; für echten Betrieb ist ein Buchungs-Backend nötig (Salon-Kalender, Bestätigung per SMS/E-Mail).
+- Buchungen/Anfragen sind nur lokal (Abgleich mit dem Team-Kalender nur im selben Browser); für echten Betrieb ist ein Buchungs-Backend nötig.
 - Terminerinnerungen werden nur geplant und als Vorschau gezeigt – **nicht verschickt** (siehe oben: Server + WhatsApp Business API / SMS-Anbieter).
 - Öffnungs-Schlusszeiten und Samstag sind Platzhalter; Preise sind Beispielpreise; Teamnamen sind Platzhalter.
 - Die OSM-Karte braucht Internet (offline erscheint ein Hinweis). Impressum/Datenschutz müssen vor Livegang ausgefüllt werden.

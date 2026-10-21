@@ -5,10 +5,12 @@ import os, sys, json, shutil, subprocess, time, socket, re, datetime as dt
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SITE = '/tmp/site'; SUB = 'salon-demo'; PORT = 8765
+SITE = os.environ.get('SITE', '/tmp/site'); SUB = 'salon-demo'; PORT = int(os.environ.get('PORT', '8765'))
 BASE = f'http://localhost:{PORT}/{SUB}/'
 GLASS = os.environ.get('THEME') == 'glass'  # THEME=glass python3 tests/e2e.py → gleicher Lauf im Design „Glas“
 GLASS_INIT = "try { localStorage.setItem('dg-kunden-design', 'glass'); } catch (e) {}"
+# Dieser Lauf prüft das bisherige Verhalten im Modus „Sofortbuchung“ (Modus „Anfrage“ + Haarlänge: tests/haarlaenge.py)
+SOFORT_INIT = "try { if (!localStorage.getItem('dg-bridge-v1')) localStorage.setItem('dg-bridge-v1', JSON.stringify({v: 1, mode: 'sofort', requests: []})); } catch (e) {}"
 SHOTS = os.path.join(ROOT, 'screens', 'glas') if GLASS else os.path.join(ROOT, 'screens'); os.makedirs(SHOTS, exist_ok=True)
 results, errors = [], []
 
@@ -34,6 +36,11 @@ def attach(page, label):
 def no_overflow(page, label):
     w = page.evaluate('[document.documentElement.scrollWidth, window.innerWidth]')
     check(f'kein horizontales Überlaufen ({label})', w[0] <= w[1], w)
+
+def pick(page, sid, length='kurz'):
+    # Leistung wählen; bei Dauer nach Haarlänge folgt der Schritt „Ihre Haarlänge“
+    page.click(f'[data-service="{sid}"]'); page.wait_for_selector('[data-length], [data-staff]')
+    if page.locator('[data-length]').count(): page.click(f'[data-length="{length}"]'); page.wait_for_selector('[data-staff]')
 
 def to_services(page):
     page.click('a[data-nav=buchen]'); page.wait_for_selector('#v-buchen.active')
@@ -74,6 +81,7 @@ def main():
                                       user_agent='Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36')
             ctx.add_init_script("window.__bip = false; addEventListener('beforeinstallprompt', () => { window.__bip = true; });")
             if GLASS: ctx.add_init_script(GLASS_INIT)
+            ctx.add_init_script(SOFORT_INIT)
             page = ctx.new_page(); attach(page, 'main')
             print('\n== Laden & Service Worker ==')
             page.goto(BASE); page.evaluate('localStorage.clear()'); page.reload()
@@ -133,7 +141,7 @@ def main():
             page.click('a[data-nav=leistungen]'); page.wait_for_selector('#v-leistungen.active .price-row')
             check('„Beispielpreise“ sichtbar in Leistungen', page.locator('#v-leistungen .badge.sample').is_visible())
             lt = page.inner_text('#v-leistungen')
-            check('Dauer-Anzeige „ca. …“ (30 Min., 1 Std., 1,5 Std., 3 Std.)', all(x in lt for x in ['ca. 30 Min.', 'ca. 1 Std.', 'ca. 1,5 Std.', 'ca. 3 Std.']) and 'ca. ca.' not in lt)
+            check('Dauer-Anzeige „ca. …“ je Haarlänge (15 Min., 30–45 Min., 45 Min. – 1,5 Std., 2,5–3,5 Std.)', all(x in lt for x in ['ca. 15 Min.', 'ca. 30–45 Min.', 'ca. 45 Min. – 1,5 Std.', 'ca. 2,5–3,5 Std.']) and 'ca. ca.' not in lt, [x for x in ['ca. 15 Min.', 'ca. 30–45 Min.', 'ca. 45 Min. – 1,5 Std.', 'ca. 2,5–3,5 Std.'] if x not in lt])
             check('Kategorien Damen/Herren/Kinder/Farbe', all(page.locator(f'#v-leistungen h2:text-is("{c}")').count() == 1 for c in ['Damen', 'Herren', 'Kinder', 'Farbe']))
             no_overflow(page, 'leistungen'); shot(page, 'leistungen.png')
             page.click('a[data-nav=zeiten]'); page.wait_for_selector('#v-zeiten.active .hours-row')
@@ -150,7 +158,7 @@ def main():
             print('\n== Buchung ==')
             page.click('a[data-nav=buchen]'); page.wait_for_selector('#v-buchen.active [data-service]')
             check('Demo-Banner sichtbar', 'Buchungen werden nur auf diesem Gerät gespeichert' in page.inner_text('#v-buchen .demo-banner'))
-            page.click('[data-service="h-schnitt"]'); page.wait_for_selector('[data-staff="giovanni"]')
+            pick(page, 'h-schnitt'); page.wait_for_selector('[data-staff="giovanni"]')
             names = page.eval_on_selector_all('#v-buchen [data-staff] .t', 'els => els.map(e => e.textContent)')
             check('Team-Auswahl: egal + 5 Namen', names == ['Egal – erste freie Zeit', 'Giovanni', 'Marco', 'Jenny', 'Julia', 'Anny'], names)
             shot(page, 'buchung-team.png')
@@ -195,8 +203,8 @@ def main():
             check('Balayage Samstag: letzte Startzeit ≤ 10:00 (Schluss 13:00)', all(x is None or x <= 600 for x in g['sat']) and g['satEmpty'] and g['satEmpty'][-1] == '10:00', f"leerer Sa: {g['satEmpty']}; mit Demo-Terminen letzte: {[None if x is None else f'{x//60:02d}:{x%60:02d}' for x in g['sat']]}")
             check('Alle Startzeiten enden vor Ladenschluss', g['late'] == [], g['late'][:5])
             print('     Dauer-Tabelle:', '; '.join(f"{k}: {v[1]} (Raster {v[2]})" for k, v in g['dur'].items()))
-            pick = times[len(times) // 2]
-            page.click(f'#v-buchen .time[data-time="{pick}"]'); page.wait_for_selector('#time-next')
+            tpick = times[len(times) // 2]
+            page.click(f'#v-buchen .time[data-time="{tpick}"]'); page.wait_for_selector('#time-next')
             no_overflow(page, 'slots'); shot(page, 'buchung-slots.png')
             page.click('#time-next'); page.wait_for_selector('#b-name')
             page.click('#book-now')
@@ -218,14 +226,14 @@ def main():
             shot(page, 'buchung-angaben.png')
             page.click('#book-now'); page.wait_for_selector('#confirm-summary')
             summ = page.inner_text('#confirm-summary')
-            hh = f'{pick // 60:02d}:{pick % 60:02d}'
+            hh = f'{tpick // 60:02d}:{tpick % 60:02d}'
             check('Bewertungs-Bitte auf Bestätigungsseite', page.locator('#rev-done').is_visible() and 'Zufrieden? Bewerte uns auf Google' in page.inner_text('#rev-done') and page.get_attribute('#rev-done a', 'href') == 'https://search.google.com/local/writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY')
             check('Bestätigung mit Zusammenfassung', 'Herrenschnitt' in summ and hh in summ and 'Petra Schulz' in summ and 'Bahnstraße 63' in summ, summ.replace('\n', ' | ')[:160])
             no_overflow(page, 'bestaetigung'); shot(page, 'bestaetigung.png')
             print('\n== Terminerinnerung: Bestätigung + Vorschau ==')
-            bk = page.evaluate(f"JSON.parse(localStorage.getItem(SALON_CONFIG.storageKey)).bookings.find(b => b.mine && b.date === '{day}' && b.start === {pick})")
+            bk = page.evaluate(f"JSON.parse(localStorage.getItem(SALON_CONFIG.storageKey)).bookings.find(b => b.mine && b.date === '{day}' && b.start === {tpick})")
             created = dt.datetime.fromisoformat(bk['createdAt'].replace('Z', '+00:00')).astimezone().replace(tzinfo=None)
-            exp = rem_expect(day, pick, created)
+            exp = rem_expect(day, tpick, created)
             check('Buchung speichert Kanal reminder = whatsapp', bk.get('reminder') == 'whatsapp')
             got = rem_items(page, '#v-buchen [data-rembox=whatsapp]')
             check('„Erinnerungen geplant“ per WhatsApp an Telefonnummer', page.inner_text('#v-buchen .rem-t') == 'Erinnerungen geplant' and 'per WhatsApp an 0171 2345678' in page.inner_text('#v-buchen .rem-sub'))
@@ -236,7 +244,7 @@ def main():
             page.evaluate("document.querySelector('#v-buchen [data-rembox]').scrollIntoView({block: 'center'})")
             no_overflow(page, 'bestaetigung erinnerung'); shot(page, 'bestaetigung-erinnerung.png')
             first_name, bei_name = 'Petra', 'Giovanni'
-            t_d2, t_h2 = rem_texts(first_name, day, pick, 'Herrenschnitt inkl. Waschen', bei_name, BASE + '#termine')
+            t_d2, t_h2 = rem_texts(first_name, day, tpick, 'Herrenschnitt inkl. Waschen', bei_name, BASE + '#termine')
             page.click('#v-buchen [data-rem-preview]'); page.wait_for_selector('#rem-preview .phone.chat')
             check('Vorschau: Dialog (aria-modal) im WhatsApp-Stil', page.get_attribute('#rem-preview [role=dialog]', 'aria-modal') == 'true' and page.locator('#rem-preview .phone.whatsapp .ph-head.wa').is_visible() and page.inner_text('#rem-preview .ph-who b') == 'Haardesign Da Giovanni')
             b1, b2 = page.inner_text('#rem-preview .ph-bubble[data-rem=d2] .ph-txt'), page.inner_text('#rem-preview .ph-bubble[data-rem=h2] .ph-txt')
@@ -265,9 +273,9 @@ def main():
             check('Meine-Termine-Zähler = 1', page.inner_text('#mine-count') == '1')
             # Slot ist danach weg
             page.click('[data-restart]'); page.wait_for_selector('[data-service="h-schnitt"]')
-            page.click('[data-service="h-schnitt"]'); page.click('[data-staff="giovanni"]'); page.click(f'[data-day="{day}"]'); page.wait_for_selector('.day.sel')
+            pick(page, 'h-schnitt'); page.click('[data-staff="giovanni"]'); page.click(f'[data-day="{day}"]'); page.wait_for_selector('.day.sel')
             times2 = page.eval_on_selector_all('#v-buchen .time', 'els => els.map(e => +e.dataset.time)')
-            check('Gebuchter Slot verschwindet (und überlappende)', pick not in times2 and all(not (t < pick + 30 and pick < t + 30) for t in times2), f'{len(times)} → {len(times2)}')
+            check('Gebuchter Slot verschwindet (und überlappende)', tpick not in times2 and all(not (t < tpick + 30 and tpick < t + 30) for t in times2), f'{len(times)} → {len(times2)}')
             # Meine Termine + Stornieren
             page.goto(BASE + '#termine'); page.wait_for_selector('#v-termine.active')
             check('Meine Termine listet die Buchung', page.locator('.mine-item').count() == 1)
@@ -282,9 +290,9 @@ def main():
             page.click('.mine-item [data-cancel]'); page.click('[data-cancel-yes]')
             page.wait_for_selector('#v-termine .empty')
             check('Stornieren in Meine Termine', page.locator('.mine-item').count() == 0)
-            to_services(page); page.click('[data-service="h-schnitt"]'); page.click('[data-staff="giovanni"]'); page.click(f'[data-day="{day}"]'); page.wait_for_selector('.day.sel')
+            to_services(page); pick(page, 'h-schnitt'); page.click('[data-staff="giovanni"]'); page.click(f'[data-day="{day}"]'); page.wait_for_selector('.day.sel')
             times3 = page.eval_on_selector_all('#v-buchen .time', 'els => els.map(e => +e.dataset.time)')
-            check('Nach Storno ist der Slot wieder frei', pick in times3)
+            check('Nach Storno ist der Slot wieder frei', tpick in times3)
             # Zweite Buchung mit „egal“ + Storno auf Bestätigungsseite
             page.click('[data-bstep=staff]'); page.click('[data-staff="any"]'); page.wait_for_selector('#v-buchen .time')
             page.locator('#v-buchen .time').first.click(); page.click('#time-next')
@@ -369,7 +377,7 @@ def main():
             page.click('a[data-nav=kontakt]'); page.wait_for_selector('#map-msg')
             page.wait_for_timeout(500); check('Karte offline: verständlicher Hinweis, kein iframe', 'offline' in page.inner_text('#map-msg') and page.locator('#map-box iframe').count() == 0, [page.inner_text('#map-msg'), page.evaluate('navigator.onLine')])
             shot(page, 'kontakt-offline.png')
-            to_services(page); page.click('[data-service="d-foehnen"]'); page.click('[data-staff="any"]'); page.wait_for_selector('#v-buchen .time')
+            to_services(page); pick(page, 'd-foehnen'); page.click('[data-staff="any"]'); page.wait_for_selector('#v-buchen .time')
             page.locator('#v-buchen .time').first.click(); page.click('#time-next'); page.fill('#b-name', 'Offline Test'); page.fill('#b-phone', '0211 99999'); page.check('#f-rem input[value=none]'); page.click('#book-now')
             page.wait_for_selector('#confirm-summary'); check('Buchung funktioniert offline', True)
             check('Kanal „Keine“: „Keine Erinnerungen gewünscht“, keine Vorschau', 'Keine Erinnerungen gewünscht' in page.inner_text('#v-buchen [data-rembox=none]') and page.locator('#v-buchen [data-rem-preview]').count() == 0)
@@ -378,9 +386,10 @@ def main():
             print('\n== 360 px / Desktop ==')
             p2 = browser.new_page(viewport={'width': 360, 'height': 740}, is_mobile=True, has_touch=True, locale='de-DE', timezone_id='Europe/Berlin'); attach(p2, '360')
             if GLASS: p2.add_init_script(GLASS_INIT)
+            p2.add_init_script(SOFORT_INIT)
             for h in ['start', 'leistungen', 'buchen', 'zeiten', 'kontakt', 'termine']:
                 p2.goto(BASE + '#' + h); p2.wait_for_selector(f'#v-{h}.active'); p2.wait_for_timeout(150); no_overflow(p2, f'360px {h}')
-            p2.goto(BASE + '#buchen'); p2.click('[data-service="d-schnitt"]'); p2.click('[data-staff="any"]'); p2.wait_for_selector('.time'); no_overflow(p2, '360px slots')
+            p2.goto(BASE + '#buchen'); pick(p2, 'd-schnitt', 'lang'); p2.click('[data-staff="any"]'); p2.wait_for_selector('.time'); no_overflow(p2, '360px slots')
             p2.close()
             p3 = browser.new_page(viewport={'width': 1280, 'height': 860}); attach(p3, 'desktop')
             if GLASS: p3.add_init_script(GLASS_INIT)
@@ -390,8 +399,8 @@ def main():
             p4 = browser.new_page(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True, locale='de-DE'); attach(p4, 'design')
             p4.goto(BASE); p4.evaluate('localStorage.clear()'); p4.reload(); p4.wait_for_selector('.hero')
             check('Standard-Design ist „Klassisch“ (kein data-theme)', p4.evaluate("document.documentElement.getAttribute('data-theme')") is None)
-            pick = p4.locator('#v-start .design-pick')
-            check('Umschalter „Design: Klassisch | Glas“ in der Fußzeile der Startseite', pick.count() == 1 and 'Design' in pick.inner_text() and 'Glas' in pick.inner_text(), pick.inner_text() if pick.count() else '')
+            dpick = p4.locator('#v-start .design-pick')
+            check('Umschalter „Design: Klassisch | Glas“ in der Fußzeile der Startseite', dpick.count() == 1 and 'Design' in dpick.inner_text() and 'Glas' in dpick.inner_text(), dpick.inner_text() if dpick.count() else '')
             p4.click('#v-start [data-theme-set=glass]')
             st = p4.evaluate("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('dg-kunden-design'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.querySelector('.bnav')).borderRadius, document.querySelector('#v-start [data-theme-set=glass]').getAttribute('aria-pressed')]")
             check('Glas aktiv: data-theme=glass, gespeichert, theme-color, schwebende Navigation, aria-pressed', st[0] == 'glass' and st[1] == 'glass' and st[2].upper() == '#F3F0EB' and st[3] == '30px' and st[4] == 'true', st)

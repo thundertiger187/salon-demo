@@ -1,8 +1,8 @@
-E2E 2026-10-21 08:48 – 136/136 bestanden – http://localhost:8765/salon-demo/
+E2E 2026-10-21 17:39 – 136/136 bestanden – http://localhost:8767/salon-demo/
 OK   Startseite lädt unter Unterpfad
-OK   Service Worker registriert, Scope = Unterpfad – http://localhost:8765/salon-demo/
-OK   Service Worker kontrolliert die Seite – http://localhost:8765/salon-demo/sw.js
-OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v7'], 'n': 22}
+OK   Service Worker registriert, Scope = Unterpfad – http://localhost:8767/salon-demo/
+OK   Service Worker kontrolliert die Seite – http://localhost:8767/salon-demo/sw.js
+OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v8'], 'n': 22}
 OK   Manifest Content-Type – application/manifest+json
 OK   Manifest Felder (name/short_name/display/start_url/scope/Farben) – {'name': 'Haardesign Da Giovanni', 'short_name': 'Da Giovanni', 'start_url': './', 'scope': './', 'display': 'standalone'}
 OK   Icon lädt icons/icon-192.png (any) – 192x192
@@ -23,12 +23,12 @@ OK   „Bewertung schreiben“ → writereview?placeid
 OK   „Alle Bewertungen auf Google lesen“ → reviews?placeid
 OK   Keine erfundenen Rezensionstexte
 OK   „Beispielpreise“ sichtbar in Leistungen
-OK   Dauer-Anzeige „ca. …“ (30 Min., 1 Std., 1,5 Std., 3 Std.)
+OK   Dauer-Anzeige „ca. …“ je Haarlänge (15 Min., 30–45 Min., 45 Min. – 1,5 Std., 2,5–3,5 Std.) – []
 OK   Kategorien Damen/Herren/Kinder/Farbe
 OK   kein horizontales Überlaufen (leistungen) – [390, 390]
 OK   Heute hervorgehoben – MittwochHeute
 09:00–18:00 Uhr
-OK   Status „Jetzt geöffnet/geschlossen“ – Jetzt geschlossen
+OK   Status „Jetzt geöffnet/geschlossen“ – Jetzt geöffnet
 OK   Hinweis „Zeiten vorläufig“ genau dann, wenn hoursProvisional – hoursProvisional=False
 OK   Echte Zeiten: Di–Do 9–18, Fr 9–20, Sa 8:30–13 – Montag | geschlossen | Dienstag | 09:00–18:00 Uhr | MittwochHeute | 09:00–18:00 Uhr | Donnerstag | 09:00–18:00 Uhr | Freitag | 09:00–20:00 Uhr | Samstag | 08:30–13:00 Uhr | Sonntag | geschlossen
 OK   Mo + So geschlossen
@@ -43,7 +43,7 @@ OK   Keine Slot-Überschneidung mit Terminen – []
 OK   Alle Slots innerhalb der Öffnungszeiten (inkl. Dauer) – []
 OK   Herrenschnitt (UI): alle Startzeiten auf :00/:30 – ['09:30', '10:00', '11:00', '11:30', '12:30']
 OK   Herrenschnitt (14 Tage): nie :15/:45 – []
-OK   15-Min.-Leistungen: :15/:45 werden angeboten – 664 Startzeiten auf :15/:45
+OK   15-Min.-Leistungen: :15/:45 werden angeboten – 604 Startzeiten auf :15/:45
 OK   Demo-Termine ≥ 30 Min. liegen auf :00/:30 – 0
 OK   Balayage Samstag: letzte Startzeit ≤ 10:00 (Schluss 13:00) – leerer Sa: ['08:30', '09:00', '09:30', '10:00']; mit Demo-Terminen letzte: ['10:00', None]
 OK   Alle Startzeiten enden vor Ladenschluss – []
@@ -56,7 +56,7 @@ OK   Kein Handy-Hinweis bei Handynummer
 OK   Hinweis „nur auf Handynummer“ bei Festnetz
 OK   Einwilligung folgt der Auswahl (SMS / Keine) – ['Ich möchte Terminerinnerungen per SMS erhalten – 2 Tage und 2 Stunden vorher, an die oben angegebene Nummer. Jederzeit abbestellbar.', 'Sie erhalten keine Terminerinnerungen.']
 OK   Bewertungs-Bitte auf Bestätigungsseite
-OK   Bestätigung mit Zusammenfassung – Wann | Samstag, 24. Oktober 2026 | 11:00–11:30 Uhr | Was | Herrenschnitt inkl. Waschen | Bei | Giovanni | Preis | 27 € (Beispielpreis) | Name | Petra Schulz | T
+OK   Bestätigung mit Zusammenfassung – Wann | Samstag, 24. Oktober 2026 | 11:00–11:30 Uhr | Was | Herrenschnitt inkl. Waschen | Haarlänge kurz · ca. 30 Min. | Bei | Giovanni | Status | Bestätigt | Pr
 OK   kein horizontales Überlaufen (bestaetigung) – [390, 390]
 OK   Buchung speichert Kanal reminder = whatsapp
 OK   „Erinnerungen geplant“ per WhatsApp an Telefonnummer
@@ -66,7 +66,7 @@ OK   Demo-Hinweis „im echten Betrieb verschickt der Salon-Server …“
 OK   Keine „an den Salon senden“-Buttons mehr
 OK   kein horizontales Überlaufen (bestaetigung erinnerung) – [390, 390]
 OK   Vorschau: Dialog (aria-modal) im WhatsApp-Stil
-OK   Vorschau-Text 2 Tage vorher (Name, Wochentag, Datum, Uhrzeit, Leistung, Mitarbeiter, Link) – Hallo Petra, kleine Erinnerung: Ihr Termin bei Haardesign Da Giovanni ist am Samstag, 24.10. um 11:00 Uhr (Herrenschnitt inkl. Waschen bei Giovanni). Absagen oder verschieben bis 24 Std. vorher: http://localhost:8765/salon-demo/#termine. Bis bald!
+OK   Vorschau-Text 2 Tage vorher (Name, Wochentag, Datum, Uhrzeit, Leistung, Mitarbeiter, Link) – Hallo Petra, kleine Erinnerung: Ihr Termin bei Haardesign Da Giovanni ist am Samstag, 24.10. um 11:00 Uhr (Herrenschnitt inkl. Waschen bei Giovanni). Absagen oder verschieben bis 24 Std. vorher: http://localhost:8767/salon-demo/#termine. Bis bald!
 OK   Vorschau-Text 2 Stunden vorher – Hallo Petra, in 2 Stunden um 11:00 Uhr sehen wir uns bei Haardesign Da Giovanni, Bahnstraße 63, Erkrath. Bis gleich!
 OK   Link zu „Meine Termine“ in der Nachricht
 OK   Blasen mit Uhrzeit (= Versandzeit) + Häkchen – ['11:00', '09:00']
@@ -87,12 +87,12 @@ OK   Stornieren in Meine Termine
 OK   Nach Storno ist der Slot wieder frei
 OK   Festnetz +49 211 … mit SMS → Handy-Hinweis
 OK   Kanal SMS gespeichert + angezeigt
-OK   SMS-Buchung: Zeiten/Status (kurzfristig → „entfällt“ möglich) – [['Mo, 19.10. um 10:00 Uhr – 2 Tage vorher', 'entfällt', True], ['Mi, 21.10. um 08:00 Uhr – 2 Stunden vorher', 'entfällt', True]]
+OK   SMS-Buchung: Zeiten/Status (kurzfristig → „entfällt“ möglich) – [['Di, 20.10. um 09:00 Uhr – 2 Tage vorher', 'entfällt', True], ['Do, 22.10. um 07:00 Uhr – 2 Stunden vorher', 'geplant', False]]
 OK   SMS-Vorschau: Absender „Da Giovanni“, graue Blasen, keine Häkchen
-OK   SMS-Vorschau: beide Texte korrekt – Hallo Max, in 2 Stunden um 10:00 Uhr sehen wir uns bei Haardesign Da Giovanni, Bahnstraße 63, Erkrath. Bis gleich!
+OK   SMS-Vorschau: beide Texte korrekt – Hallo Max, in 2 Stunden um 09:00 Uhr sehen wir uns bei Haardesign Da Giovanni, Bahnstraße 63, Erkrath. Bis gleich!
 OK   Vorschau: „entfällt“-Hinweis genau bei entfallenden Erinnerungen
 OK   kein horizontales Überlaufen (vorschau sms) – [390, 390]
-OK   Buchung „egal“ teilt Friseur:in zu – Jenny
+OK   Buchung „egal“ teilt Friseur:in zu – Anny
 OK   „Termin stornieren“ auf Bestätigungsseite
 OK   Mi 21.10. 10:30 → Mo 19.10. 10:30 + Mi 21.10. 08:30, beide geplant – ['Mo, 19.10. 10:30 geplant', 'Mi, 21.10. 08:30 geplant']
 OK   Nach Erreichen: „verschickt“ – ['Mo, 19.10. 10:30 verschickt', 'Mi, 21.10. 08:30 geplant']

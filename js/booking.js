@@ -32,8 +32,23 @@
     if (m % 30 === 0) return 'ca. ' + String(m / 60).replace('.', ',') + ' Std.';
     return 'ca. ' + Math.floor(m / 60) + ' Std. ' + (m % 60) + ' Min.';
   }
-  /* Startzeiten-Raster einer Leistung: services[].step, sonst <=15 Min. → 15, sonst 30 (:00/:30) */
-  function stepFor(sv) { return sv.step || (sv.duration <= 15 ? 15 : 30); }
+  /* Startzeiten-Raster einer Leistung (für die jeweilige Dauer): services[].step, sonst <=15 Min. → 15, sonst 30 (:00/:30) */
+  function stepFor(sv, dur) { return sv.step || ((dur || sv.duration) <= 15 ? 15 : 30); }
+  /* ---------- Haarlänge → Dauer ---------- */
+  var LENGTHS = ['kurz', 'mittel', 'lang'];
+  function hasLengths(sv) { return !!(sv && sv.lengths && LENGTHS.every(function (k) { return sv.lengths[k] > 0; })); }
+  /* Dauer einer Leistung für die gewählte Haarlänge (ohne Längen-Abhängigkeit bzw. ohne Wahl: duration) */
+  function durFor(sv, len) { if (!sv) return 0; return hasLengths(sv) && sv.lengths[len] ? sv.lengths[len] : sv.duration; }
+  function durRange(sv) { if (!hasLengths(sv)) return [sv.duration, sv.duration]; var v = LENGTHS.map(function (k) { return sv.lengths[k]; }); return [Math.min.apply(null, v), Math.max.apply(null, v)]; }
+  function lengthLabel(len) { var x = (C.hairLengths || []).filter(function (l) { return l.id === len; })[0]; return x ? x.label : ''; }
+  /* „ca. 30–45 Min.“ · „ca. 45 Min. – 1,5 Std.“ · bei gleicher Dauer wie durTxt */
+  function durRangeTxt(sv) {
+    var r = durRange(sv); if (r[0] === r[1]) return durTxt(r[0]);
+    if (r[1] < 60) return 'ca. ' + r[0] + '–' + r[1] + ' Min.';
+    var a = durTxt(r[0]), b = durTxt(r[1]).replace('ca. ', '');
+    if (/ Std\.$/.test(a) && / Std\.$/.test(b) && a.indexOf('Min.') < 0 && b.indexOf('Min.') < 0) return a.replace(' Std.', '') + '–' + b; // „ca. 2,5–3,5 Std.“
+    return a + ' – ' + b;
+  }
   function firstOnGrid(t, step) { return Math.ceil(t / step) * step; }
   function euro(v) { return v.toLocaleString('de-DE', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €'; }
   function uid() { return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -59,6 +74,47 @@
       if (ivn.length) return { open: false, text: 'Jetzt geschlossen', sub: 'öffnet ' + (d === 1 ? 'morgen' : WD[weekday(n)]) + ' um ' + fmtTime(ivn[0][0]) + ' Uhr' };
     }
     return { open: false, text: 'Jetzt geschlossen', sub: '' };
+  }
+
+  /* ---------- Gemeinsamer Speicher mit dem Team-Kalender („Brücke“) ----------
+     Beide Demos liegen unter derselben Herkunft (thundertiger187.github.io) → gleicher localStorage, WENN sie im selben
+     Browser auf demselben Gerät laufen. Dann landen Terminwünsche direkt im Team-Kalender und dessen Antwort (bestätigt /
+     neuer Vorschlag), Buchungsmodus, Dauern je Haarlänge und freie Zeiten kommen hier an. Sonst arbeitet die App allein
+     (Demo-Knöpfe simulieren den Salon). Ein echter Betrieb braucht dafür einen Server. */
+  function bLoad() { try { var x = JSON.parse(localStorage.getItem(C.bridgeKey)); if (x && typeof x === 'object') { if (!Array.isArray(x.requests)) x.requests = []; return x; } } catch (e) { /* ignore */ } return { v: 1, requests: [] }; }
+  function bSave(x) { try { localStorage.setItem(C.bridgeKey, JSON.stringify(x)); } catch (e) { /* ignore */ } }
+  function bTx(fn) { var x = bLoad(), r = fn(x); bSave(x); return r; }
+  function bReq(x, id) { return x.requests.filter(function (r) { return r.id === id; })[0] || null; }
+  /* Buchungsmodus: Einstellung aus dem Team-Kalender (falls im selben Browser), sonst config.js, Standard „Anfrage“ */
+  function mode() { var x = bLoad(); return x.mode === 'sofort' || x.mode === 'anfrage' ? x.mode : (C.booking.mode === 'sofort' ? 'sofort' : 'anfrage'); }
+  function modeSource() { var x = bLoad(); return x.mode === 'sofort' || x.mode === 'anfrage' ? 'team' : 'config'; }
+  /* Team-Kalender war in diesem Browser aktiv (hat freie Zeiten / Einstellungen hinterlegt) */
+  function teamLinked() { var x = bLoad(); return !!(x.teamAt && x.avail && x.avail.days); }
+  /* Vom Inhaber geänderte Dauern übernehmen (nur wenn der Team-Kalender im selben Browser läuft) */
+  var BASE_SV = {}; C.services.forEach(function (sv) { BASE_SV[sv.id] = { duration: sv.duration, lengths: sv.lengths ? JSON.parse(JSON.stringify(sv.lengths)) : null }; });
+  function applyDurations() {
+    var d = bLoad().durations || {};
+    C.services.forEach(function (sv) {
+      var o = d[sv.id], base = BASE_SV[sv.id];
+      var dur = o && o.duration > 0 && o.duration % 15 === 0 ? o.duration : base.duration;
+      var len = o ? (o.lengths && LENGTHS.every(function (k) { return o.lengths[k] > 0 && o.lengths[k] % 15 === 0; }) ? o.lengths : null) : base.lengths;
+      sv.duration = dur; if (len) sv.lengths = { kurz: len.kurz, mittel: len.mittel, lang: len.lang }; else delete sv.lengths;
+    });
+  }
+  applyDurations();
+  /* Freie Zeiten aus dem Team-Kalender (Arbeitszeiten, Pausen, Abwesenheiten, Termine) für einen Tag – oder null */
+  function availDay(iso) {
+    var x = bLoad(); if (!(x.teamAt && x.avail && x.avail.days)) return null;
+    if (x.avail.days[iso]) return { staff: x.avail.days[iso], skills: x.avail.skills || {} };
+    // Team-Kalender kennt diesen Tag (Zeitraum veröffentlicht), aber niemand arbeitet → nichts frei
+    if (x.avail.from && iso >= x.avail.from && iso < addDays(x.avail.from, 21)) return { staff: {}, skills: x.avail.skills || {} };
+    return null;
+  }
+  function canDo(av, stId, svId) { var k = av.skills[stId]; return !k || k === 'all' || k.indexOf(svId) >= 0; }
+  function fitsTeam(e, t, dur) {
+    if (!e) return false;
+    var inWin = (e.win || []).some(function (w) { return t >= w[0] && t + dur <= w[1]; });
+    return inWin && !(e.busy || []).some(function (b) { return b[0] < t + dur && t < b[1]; });
   }
 
   /* ---------- Speicher ---------- */
@@ -101,32 +157,37 @@
     return s;
   }
 
-  function busy(s, staffId, iso, start, dur, ignoreId) {
+  function busy(s, staffId, iso, start, dur, ignoreId, ownOnly) {
     return s.bookings.some(function (b) {
-      return b.status !== 'cancelled' && b.staffId === staffId && b.date === iso && b.id !== ignoreId && b.start < start + dur && start < b.start + b.duration;
+      return b.status !== 'cancelled' && (!ownOnly || b.mine) && b.staffId === staffId && b.date === iso && b.id !== ignoreId && b.start < start + dur && start < b.start + b.duration;
     });
   }
-  /* Freie Startzeiten: [{ start, staffIds }] */
-  function freeSlots(s, iso, serviceId, staffId, now) {
+  /* Freie Startzeiten: [{ start, staffIds }] – nur dort, wo die GANZE Dauer (je nach Haarlänge) passt:
+     innerhalb der Öffnungszeiten, und (falls der Team-Kalender im selben Browser lief) innerhalb der Arbeitszeit ohne Pause,
+     Abwesenheit oder Termin; sonst gegen die Demo-Termine dieses Geräts. opts: { length, ignoreId } */
+  function freeSlots(s, iso, serviceId, staffId, now, opts) {
     var sv = service(serviceId); if (!sv) return [];
+    if (typeof opts === 'string') opts = { length: opts };
+    opts = opts || {};
     now = now || new Date();
     var today = todayISO(now), out = [];
     if (iso < today || iso > addDays(today, C.booking.daysAhead - 1)) return [];
+    var dur = durFor(sv, opts.length), step = stepFor(sv, dur);
     var earliest = iso === today ? minutesNow(now) + C.booking.leadMinutes : 0;
-    var team = C.stylists.filter(function (st) { return (!staffId || st.id === staffId) && worksOn(st, iso); });
+    var av = availDay(iso);
+    var team = C.stylists.filter(function (st) { return (!staffId || st.id === staffId) && (av ? !!av.staff[st.id] && canDo(av, st.id, sv.id) : worksOn(st, iso)); });
     intervals(iso).forEach(function (iv) {
-      var step = stepFor(sv);
-      for (var t = firstOnGrid(Math.max(iv[0], earliest), step); t + sv.duration <= iv[1]; t += step) {
-        var ids = team.filter(function (st) { return !busy(s, st.id, iso, t, sv.duration); }).map(function (st) { return st.id; });
+      for (var t = firstOnGrid(Math.max(iv[0], earliest), step); t + dur <= iv[1]; t += step) {
+        var ids = team.filter(function (st) { return av ? fitsTeam(av.staff[st.id], t, dur) && !busy(s, st.id, iso, t, dur, opts.ignoreId, true) : !busy(s, st.id, iso, t, dur, opts.ignoreId); }).map(function (st) { return st.id; });
         if (ids.length) out.push({ start: t, staffIds: ids });
       }
     });
     return out;
   }
   function loadOf(s, staffId, iso) { return s.bookings.filter(function (b) { return b.status !== 'cancelled' && b.staffId === staffId && b.date === iso; }).reduce(function (a, b) { return a + b.duration; }, 0); }
-  function nextFree(s, serviceId, now) {
+  function nextFree(s, serviceId, now, len) {
     var today = todayISO(now);
-    for (var i = 0; i < C.booking.daysAhead; i++) { var d = addDays(today, i), f = freeSlots(s, d, serviceId, null, now); if (f.length) return { date: d, start: f[0].start }; }
+    for (var i = 0; i < C.booking.daysAhead; i++) { var d = addDays(today, i), f = freeSlots(s, d, serviceId, null, now, len); if (f.length) return { date: d, start: f[0].start }; }
     return null;
   }
 
@@ -136,21 +197,89 @@
   function validPhone(p) { p = (p || '').trim(); var d = phoneDigits(p); return /^(\+|0)[0-9 ()\/\-]+$/.test(p) && d.length >= 7 && d.length <= 15; }
 
   /* Buchen / Stornieren */
+  /* Buchen bzw. Terminwunsch senden. Modus „Anfrage“: req = 'angefragt' (erst fest, wenn der Salon bestätigt),
+     Modus „Sofort“: req = 'bestaetigt'. In beiden Fällen geht der Termin über den gemeinsamen Speicher an den Team-Kalender –
+     NICHT per WhatsApp/SMS. */
   function book(data, now) {
     var s = seed(load(), now), sv = service(data.serviceId);
     if (!sv) return { ok: false, error: 'Leistung unbekannt' };
+    var len = hasLengths(sv) ? data.length : null;
+    if (hasLengths(sv) && LENGTHS.indexOf(len) < 0) return { ok: false, error: 'Bitte Haarlänge wählen.' };
     if (!validName(data.name) || !validPhone(data.phone)) return { ok: false, error: 'Bitte Name und Telefonnummer prüfen.' };
-    var slot = freeSlots(s, data.date, sv.id, data.staffId === 'any' ? null : data.staffId, now).filter(function (x) { return x.start === data.start; })[0];
+    var slot = freeSlots(s, data.date, sv.id, data.staffId === 'any' ? null : data.staffId, now, { length: len }).filter(function (x) { return x.start === data.start; })[0];
     if (!slot) return { ok: false, error: 'Diese Zeit ist leider nicht mehr frei.' };
     var staffId = data.staffId !== 'any' && slot.staffIds.indexOf(data.staffId) >= 0 ? data.staffId
       : slot.staffIds.slice().sort(function (a, b) { return loadOf(s, a, data.date) - loadOf(s, b, data.date); })[0];
-    var b = { id: uid(), mine: true, serviceId: sv.id, staffId: staffId, staffChoice: data.staffId, date: data.date, start: data.start, duration: sv.duration, price: sv.price, priceFrom: !!sv.from,
-      name: data.name.trim(), phone: data.phone.trim(), note: (data.note || '').trim().slice(0, 500), status: 'ok', createdAt: (now || new Date()).toISOString(),
-      reminder: REM_CHANNELS.indexOf(data.reminder) >= 0 ? data.reminder : 'none' };
+    var m = mode(), at = (now || new Date()).toISOString();
+    var b = { id: uid(), mine: true, serviceId: sv.id, length: len, staffId: staffId, staffChoice: data.staffId, date: data.date, start: data.start, duration: durFor(sv, len), price: sv.price, priceFrom: !!sv.from,
+      name: data.name.trim(), phone: data.phone.trim(), note: (data.note || '').trim().slice(0, 500), status: 'ok', createdAt: at,
+      reminder: REM_CHANNELS.indexOf(data.reminder) >= 0 ? data.reminder : 'none',
+      mode: m, req: m === 'sofort' ? 'bestaetigt' : 'angefragt', confirmedAt: m === 'sofort' ? at : null, confirmedBy: m === 'sofort' ? 'sofort' : null, proposal: null };
     s.bookings.push(b); save(s);
+    bTx(function (x) { x.requests.push(toReq(b, sv)); });
     return { ok: true, booking: b };
   }
-  function cancel(id) { var s = load(); s.bookings.forEach(function (b) { if (b.id === id && b.mine) { b.status = 'cancelled'; b.cancelledAt = new Date().toISOString(); } }); save(s); }
+  function toReq(b, sv) {
+    return { id: b.id, origin: 'kunden-app', createdAt: b.createdAt, updatedAt: b.createdAt, mode: b.mode, status: b.req, serviceId: b.serviceId, serviceName: sv ? sv.name : '',
+      length: b.length || null, duration: b.duration, date: b.date, start: b.start, staffId: b.staffId, staffChoice: b.staffChoice, name: b.name, phone: b.phone, note: b.note,
+      reminder: b.reminder, confirmedAt: b.confirmedAt, confirmedBy: b.confirmedBy, proposal: null };
+  }
+  /* Status einer eigenen Buchung: angefragt | bestaetigt | verschoben (neuer Vorschlag des Salons) – alte Buchungen ohne Angabe = bestätigt */
+  function reqStatus(b) { return b && b.req ? b.req : 'bestaetigt'; }
+  function isConfirmed(b) { return reqStatus(b) === 'bestaetigt'; }
+  /* Antworten des Salons aus dem gemeinsamen Speicher übernehmen → true, wenn sich etwas geändert hat */
+  function sync() {
+    var x = bLoad(), s = load(), changed = false;
+    s.bookings.forEach(function (b) {
+      if (!b.mine || b.status === 'cancelled') return;
+      var r = bReq(x, b.id); if (!r) return;
+      if (r.status === 'storniert' && r.cancelledBy === 'salon') { b.status = 'cancelled'; b.cancelledAt = r.updatedAt; b.cancelledBy = 'salon'; changed = true; return; }
+      if (r.status === 'bestaetigt' && b.req !== 'bestaetigt') { b.req = 'bestaetigt'; b.confirmedAt = r.confirmedAt || new Date().toISOString(); b.confirmedBy = r.confirmedBy || 'salon'; b.proposal = null; changed = true; }
+      if (r.status === 'verschoben' && r.proposal && (b.req !== 'verschoben' || JSON.stringify(b.proposal) !== JSON.stringify(r.proposal))) { b.req = 'verschoben'; b.proposal = r.proposal; changed = true; }
+      if (r.status === 'bestaetigt' && (r.date !== b.date || r.start !== b.start)) { b.date = r.date; b.start = r.start; changed = true; }
+      if (r.staffId && r.staffId !== b.staffId && stylist(r.staffId)) { b.staffId = r.staffId; changed = true; }
+    });
+    if (changed) save(s);
+    return changed;
+  }
+  function updBoth(id, fnB, fnR) {
+    var s = load(), b = s.bookings.filter(function (x) { return x.id === id && x.mine; })[0]; if (!b) return null;
+    fnB(b); save(s);
+    bTx(function (x) { var r = bReq(x, id); if (!r) { r = toReq(b, service(b.serviceId)); x.requests.push(r); } fnR(r, b); r.updatedAt = new Date().toISOString(); });
+    return b;
+  }
+  /* Demo ohne Team-Kalender im selben Browser: Salon bestätigt den Wunsch */
+  function demoConfirm(id) {
+    var at = new Date().toISOString();
+    return updBoth(id, function (b) { b.req = 'bestaetigt'; b.confirmedAt = at; b.confirmedBy = 'demo'; b.proposal = null; },
+      function (r) { r.status = 'bestaetigt'; r.confirmedAt = at; r.confirmedBy = 'demo'; r.proposal = null; });
+  }
+  /* Demo: Salon schlägt eine andere Zeit vor (nächste freie Zeit mit gleicher Dauer, mind. 1 Std. später) */
+  function proposalFor(b, now) {
+    var s = seed(load(), now), today = todayISO(now);
+    for (var i = 0; i < C.booking.daysAhead; i++) {
+      var d = addDays(b.date < today ? today : b.date, i);
+      var f = freeSlots(s, d, b.serviceId, null, now, { length: b.length, ignoreId: b.id }).filter(function (x) { return i > 0 || x.start >= b.start + 60; });
+      if (f.length) { var pick = f[0], st = pick.staffIds.indexOf(b.staffId) >= 0 ? b.staffId : pick.staffIds[0]; return { date: d, start: pick.start, staffId: st }; }
+    }
+    return null;
+  }
+  function demoPropose(id, now) {
+    var b0 = get(id); if (!b0) return null;
+    var p = proposalFor(b0, now); if (!p) return null;
+    return updBoth(id, function (b) { b.req = 'verschoben'; b.proposal = p; }, function (r) { r.status = 'verschoben'; r.proposal = p; r.proposedBy = 'demo'; });
+  }
+  /* Kund:in nimmt den neuen Vorschlag an → Termin ist fest */
+  function acceptProposal(id) {
+    var at = new Date().toISOString();
+    return updBoth(id, function (b) { var p = b.proposal; if (!p) return; b.date = p.date; b.start = p.start; if (p.staffId) b.staffId = p.staffId; b.req = 'bestaetigt'; b.confirmedAt = at; b.confirmedBy = 'kunde'; b.proposal = null; },
+      function (r, b) { r.status = 'bestaetigt'; r.date = b.date; r.start = b.start; r.staffId = b.staffId; r.confirmedAt = at; r.confirmedBy = 'kunde'; r.acceptedAt = at; r.proposal = null; });
+  }
+  function cancel(id, why) {
+    var at = new Date().toISOString();
+    updBoth(id, function (b) { b.status = 'cancelled'; b.cancelledAt = at; if (why) b.cancelReason = why; },
+      function (r) { r.status = 'storniert'; r.cancelledBy = 'kunde'; r.reason = why || ''; });
+  }
   function get(id) { return load().bookings.filter(function (b) { return b.id === id; })[0] || null; }
   function mine(now) {
     now = now || new Date();
@@ -165,10 +294,11 @@
   var REM_CHANNELS = ['whatsapp', 'sms'];
   var REMINDERS = [{ id: 'd2', label: '2 Tage vorher' }, { id: 'h2', label: '2 Stunden vorher' }];
   function reminderAt(b, id) { return id === 'd2' ? dateTime(addDays(b.date, -2), b.start) : dateTime(b.date, b.start - 120); }
+  /* Erinnerungen werden erst geplant, wenn der Termin fest ist (bestätigt) – Bezugszeitpunkt = Bestätigung */
   function reminders(b, now) {
-    if (!b || REM_CHANNELS.indexOf(b.reminder) < 0) return [];
+    if (!b || REM_CHANNELS.indexOf(b.reminder) < 0 || !isConfirmed(b)) return [];
     now = now || new Date();
-    var created = b.createdAt ? new Date(b.createdAt) : now;
+    var created = b.confirmedAt ? new Date(b.confirmedAt) : (b.createdAt ? new Date(b.createdAt) : now);
     return REMINDERS.map(function (r) {
       var at = reminderAt(b, r.id);
       return { id: r.id, label: r.label, at: at, date: toISO(at), min: at.getHours() * 60 + at.getMinutes(),
@@ -202,5 +332,8 @@
   root.SB = { WD: WD, WD_SHORT: WD_SHORT, MONTHS: MONTHS, pad: pad, toISO: toISO, fromISO: fromISO, todayISO: todayISO, addDays: addDays, weekday: weekday, hm: hm,
     fmtTime: fmtTime, fmtTimeShort: fmtTimeShort, fmtDate: fmtDate, dateTime: dateTime, durTxt: durTxt, stepFor: stepFor, euro: euro, service: service, stylist: stylist, intervals: intervals, isOpenDay: isOpenDay,
     worksOn: worksOn, openState: openState, load: load, save: save, seed: seed, freeSlots: freeSlots, nextFree: nextFree, validName: validName, validPhone: validPhone,
-    book: book, cancel: cancel, get: get, reminders: reminders, REM_CHANNELS: REM_CHANNELS, mine: mine, pastMine: pastMine, ics: ics };
+    book: book, cancel: cancel, get: get, reminders: reminders, REM_CHANNELS: REM_CHANNELS, mine: mine, pastMine: pastMine, ics: ics,
+    LENGTHS: LENGTHS, hasLengths: hasLengths, durFor: durFor, durRange: durRange, durRangeTxt: durRangeTxt, lengthLabel: lengthLabel,
+    mode: mode, modeSource: modeSource, teamLinked: teamLinked, applyDurations: applyDurations, bridge: bLoad, sync: sync, reqStatus: reqStatus, isConfirmed: isConfirmed,
+    demoConfirm: demoConfirm, demoPropose: demoPropose, acceptProposal: acceptProposal };
 })(window);

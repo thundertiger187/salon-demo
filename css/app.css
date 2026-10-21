@@ -335,3 +335,27 @@ body.no-scroll { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .ph-notif { animation: none; } }
 #v-buchen { padding-bottom: calc(170px + env(safe-area-inset-bottom)); } /* Platz für Fußleiste + Navigation */
 .rem-line .nw { white-space: nowrap; }
+
+/* ---------- Haarlänge & Terminwunsch (Anfrage-Modus) ---------- */
+.len-hint { align-items: center; font-size: 13.5px; line-height: 1.4; }
+.mode-note { display: flex; gap: 8px; align-items: flex-start; margin: -4px 0 0; line-height: 1.4; }
+.mode-note svg { width: 16px; height: 16px; flex: none; margin-top: 1px; color: var(--accent); }
+.len-opts { display: flex; flex-direction: column; gap: 10px; }
+.len-opt.sel { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.len-av { background: var(--accent-tint) !important; color: var(--accent-ink); }
+.len-av svg { width: 20px; height: 20px; }
+.len-av.len-kurz svg { transform: scaleY(.62); transform-origin: 50% 30%; }
+.len-av.len-mittel svg { transform: scaleY(.82); transform-origin: 50% 30%; }
+.len-dur { color: var(--accent-ink); }
+.done-ico.wait { background: var(--warn-tint); color: var(--warn); }
+.done-ico.prop { background: var(--accent-tint); color: var(--accent); }
+.req-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.demo-box { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1.5px dashed #D9C3A3; background: #FFF9EE; }
+.demo-box.compact { padding: 10px 12px; gap: 8px; }
+.demo-box .small { display: flex; gap: 7px; align-items: flex-start; line-height: 1.4; }
+.demo-box .small svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+.demo-box .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.prop-box .acts .btn svg { width: 16px; height: 16px; }
+.rem-box.wait .rem-t { color: var(--ink-soft); }
+.mine-item[data-status="angefragt"] { border-color: #E9D3AE; }
+.mine-item[data-status="verschoben"] { border-color: #E6CBBD; }

@@ -24,7 +24,10 @@
     bell: ic('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'),
     eye: ic('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>'),
     pen: ic('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
-    install: ic('<path d="M12 3v12M7 10l5 5 5-5"/><rect x="4" y="17" width="16" height="4" rx="1.5"/>')
+    install: ic('<path d="M12 3v12M7 10l5 5 5-5"/><rect x="4" y="17" width="16" height="4" rx="1.5"/>'),
+    clock: ic('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+    swap: ic('<path d="M4 8h13l-3-3M20 16H7l3 3"/>'),
+    hair: ic('<path d="M12 3c-4.5 0-7.5 3.3-7.5 8v9.5h3V12c0-2 1.6-3.6 4.5-4.6 2.9 1 4.5 2.6 4.5 4.6v8.5h3V11c0-4.7-3-8-7.5-8z"/>')
   };
   var A = C.address, fullAddr = A.street + ', ' + A.zip + ' ' + A.city;
   var telHref = 'tel:' + (C.phoneTel || C.phone.replace(/[^\d+]/g, ''));
@@ -57,6 +60,19 @@
   var DEMO_BANNER = '<div class="demo-banner" role="note">' + I.info + '<span><b>Demo</b> – Buchungen werden nur auf diesem Gerät gespeichert.</span></div>';
   var SAMPLE = '<span class="badge sample">Beispielpreise</span>';
   function price(s) { return (s.from ? 'ab ' : '') + S.euro(s.price); }
+  /* Haarlänge & Status */
+  var LEN = {}; (C.hairLengths || []).forEach(function (l) { LEN[l.id] = l; });
+  function lenDesc(l, cat) { return l.desc[cat] || l.desc._; }
+  function svcDur(s) { return S.hasLengths(s) ? S.durRangeTxt(s) + ' · je nach Haarlänge' : S.durTxt(s.duration); }
+  function svcLine(s, len, dur) { return s.name + (len ? ' · Haarlänge ' + S.lengthLabel(len).toLowerCase() : '') + ' · ' + S.durTxt(dur != null ? dur : S.durFor(s, len)); }
+  var REQ = { angefragt: ['warn', 'Angefragt'], bestaetigt: ['ok', 'Bestätigt'], verschoben: ['accent', 'Neuer Vorschlag'] };
+  function reqBadge(b) { var r = REQ[S.reqStatus(b)] || REQ.bestaetigt; return '<span class="badge ' + r[0] + ' req-badge" data-req="' + S.reqStatus(b) + '">' + r[1] + '</span>'; }
+  var HINT_LEN = '<div class="notice info len-hint" id="len-hint">' + I.clock + '<div>' + esc(C.lengthHint || '') + '</div></div>';
+  function modeNote() {
+    return S.mode() === 'anfrage'
+      ? '<p class="muted small mode-note" data-mode="anfrage">' + I.info + '<span>Sie senden einen <b>Terminwunsch</b> – der Salon bestätigt ihn oder schlägt eine andere Zeit vor. Den Status sehen Sie unter „Meine Termine“.</span></p>'
+      : '<p class="muted small mode-note" data-mode="sofort">' + I.check + '<span>Sofortbuchung: Ihr Termin ist direkt fest.</span></p>';
+  }
   function state() { return S.seed(S.load()); }
   function toast(msg) { var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600); }
   function footLinks() {
@@ -92,6 +108,7 @@
     if (!b.reminder) return ''; // ältere Buchungen ohne Angabe
     if (b.reminder === 'none') return '<div class="rem-box none' + (compact ? ' compact' : '') + '" data-rembox="none"><span class="rem-ico">' + I.bell + '</span><span class="small muted">Keine Erinnerungen gewünscht</span></div>';
     var ch = CH[b.reminder], rs = S.reminders(b);
+    if (!S.isConfirmed(b)) return '<div class="rem-box wait' + (compact ? ' compact' : '') + '" data-rembox="' + b.reminder + '" data-rem-wait><div class="rem-head"><span class="rem-ico ' + b.reminder + '">' + ch.icon + '</span><span class="grow"><b class="rem-t">Erinnerungen folgen nach Bestätigung</b><span class="rem-sub">per ' + ch.name + ' an ' + esc(b.phone) + ' – 2 Tage und 2 Stunden vorher, sobald der Termin fest ist</span></span></div></div>';
     var title = rs.some(function (r) { return r.status === 'geplant'; }) ? 'Erinnerungen geplant' : rs.some(function (r) { return r.status === 'verschickt'; }) ? 'Erinnerungen verschickt' : 'Erinnerungen entfallen';
     return '<div class="rem-box' + (compact ? ' compact' : '') + '" data-rembox="' + b.reminder + '">' +
       '<div class="rem-head"><span class="rem-ico ' + b.reminder + '">' + ch.icon + '</span><span class="grow"><b class="rem-t">' + title + '</b><span class="rem-sub">per ' + ch.name + ' an ' + esc(b.phone) + '</span></span></div>' +
@@ -176,7 +193,7 @@
         '<a class="tile" href="#buchen"><span class="k">Nächster freier Termin</span><span class="v">' + (nf ? esc(S.fmtDate(nf.date)) + ' ' + S.fmtTime(nf.start) : '–') + '</span><span class="s">online buchbar</span></a>' +
         '<a class="tile wide" href="#kontakt"><span class="k">Adresse</span><span class="v">' + esc(C.name) + '</span><span class="s">' + esc(fullAddr) + ' · ' + esc(C.phone) + '</span></a>' +
       '</div>' +
-      (mine.length ? '<a class="c-item" href="#termine"><span class="ico">' + I.cal + '</span><span class="grow"><span class="t">Ihr nächster Termin</span><span class="s" style="display:block">' + esc(S.fmtDate(mine[0].date, true)) + ', ' + S.fmtTime(mine[0].start) + ' Uhr</span></span>' + I.chev + '</a>' : '') +
+      (mine.length ? '<a class="c-item" href="#termine"><span class="ico">' + I.cal + '</span><span class="grow"><span class="t">Ihr nächster Termin</span><span class="s" style="display:block">' + esc(S.fmtDate(mine[0].date, true)) + ', ' + S.fmtTime(mine[0].start) + ' Uhr' + (S.isConfirmed(mine[0]) ? '' : ' · ' + (S.reqStatus(mine[0]) === 'verschoben' ? 'neuer Vorschlag' : 'angefragt')) + '</span></span>' + I.chev + '</a>' : '') +
       '<div class="card" id="install-card" hidden style="padding:16px;display:flex;gap:14px;align-items:center"><img src="icons/icon-192.png" alt="" width="48" height="48" style="border-radius:12px"><div style="flex:1;min-width:0"><b>Als App aufs Handy</b><div class="small muted">Schneller Zugriff – auch offline.</div></div><button class="btn btn-primary btn-sm" type="button" data-install>' + 'App installieren</button></div>' +
       '<div class="sec-head"><h2>Leistungen</h2></div><div class="cat-chips">' + CATS.map(function (c) { return '<a class="chip" href="#leistungen" data-cat="' + esc(c) + '">' + esc(c) + '</a>'; }).join('') + '</div>' +
       footLinks();
@@ -190,9 +207,10 @@
       '<div class="cat-chips">' + CATS.map(function (c) { return '<a class="chip" href="#leistungen" data-cat="' + esc(c) + '">' + esc(c) + '</a>'; }).join('') + '</div>' +
       CATS.map(function (c) {
         return '<div class="price-cat" id="cat-' + esc(c) + '"><h2>' + esc(c) + '</h2>' + C.services.filter(function (s) { return s.cat === c; }).map(function (s) {
-          return '<div class="price-row"><span class="n"><b>' + esc(s.name) + '</b><span>' + S.durTxt(s.duration) + '</span></span><span class="p">' + price(s) + '</span></div>';
+          return '<div class="price-row"><span class="n"><b>' + esc(s.name) + '</b><span>' + svcDur(s) + '</span></span><span class="p">' + price(s) + '</span></div>';
         }).join('') + '</div>';
       }).join('') +
+      '<p class="small muted center len-note">' + esc(C.lengthHint || '') + '</p>' +
       '<p class="small muted center">Alle Preise sind Beispielpreise inkl. MwSt. und dienen nur der Demo.</p>' +
       '<a class="btn btn-primary btn-lg btn-block" href="#buchen">' + I.cal + 'Termin buchen</a>' + footLinks();
   }
@@ -261,7 +279,7 @@
   }
 
   /* ---------------- Buchung ---------------- */
-  var B = { step: 'service', serviceId: null, staffId: 'any', date: null, time: null, name: '', phone: '', note: '', reminder: RM.defaultChannel || 'whatsapp', lastId: null, tried: false };
+  var B = { step: 'service', serviceId: null, length: null, staffId: 'any', date: null, time: null, name: '', phone: '', note: '', reminder: RM.defaultChannel || 'whatsapp', lastId: null, tried: false };
   var foot = $('#b-foot'), footInner = $('#b-foot-inner');
   function setFoot(html) { if (!html) { foot.hidden = true; footInner.innerHTML = ''; } else { foot.hidden = false; footInner.innerHTML = html; } }
   function steps(n) { return '<div class="steps" aria-hidden="true">' + [1, 2, 3, 4].map(function (i) { return '<span' + (i <= n ? ' class="on"' : '') + '></span>'; }).join('') + '</div>'; }
@@ -272,16 +290,27 @@
     if (B.step === 'service') {
       setFoot('');
       v.innerHTML = DEMO_BANNER + steps(1) + '<div><span class="eyebrow">Online-Termin</span><h1 style="margin-top:8px">Was dürfen wir für Sie <em>tun?</em></h1><p class="muted" style="margin-top:8px">Es werden nur wirklich freie Zeiten angezeigt.</p></div>' +
+        HINT_LEN + modeNote() +
         '<div style="display:flex;justify-content:flex-end;margin-bottom:-8px">' + SAMPLE + '</div>' +
         CATS.map(function (c) {
           return '<div class="b-cat">' + esc(c) + '</div>' + C.services.filter(function (s) { return s.cat === c; }).map(function (s) {
-            return '<button class="opt" type="button" data-service="' + s.id + '"><span class="grow"><span class="t">' + esc(s.name) + '</span><span class="s">' + S.durTxt(s.duration) + '</span></span><span class="p">' + price(s) + '</span>' + I.chev + '</button>';
+            return '<button class="opt" type="button" data-service="' + s.id + '"' + (S.hasLengths(s) ? ' data-has-length' : '') + '><span class="grow"><span class="t">' + esc(s.name) + '</span><span class="s">' + svcDur(s) + '</span></span><span class="p">' + price(s) + '</span>' + I.chev + '</button>';
           }).join('');
         }).join('');
+    } else if (B.step === 'length') {
+      setFoot('');
+      var sl0 = S.service(B.serviceId);
+      v.innerHTML = DEMO_BANNER + steps(1) + back('service') + '<div><h1>Ihre <em>Haarlänge?</em></h1><p class="muted" style="margin-top:6px">' + esc(sl0.name) + ' · ' + price(sl0) + '</p></div>' +
+        HINT_LEN +
+        '<div class="len-opts" role="list">' + S.LENGTHS.map(function (k) {
+          var l = LEN[k], d = S.durFor(sl0, k);
+          return '<button class="opt len-opt' + (B.length === k ? ' sel' : '') + '" type="button" role="listitem" data-length="' + k + '"><span class="av len-av len-' + k + '" aria-hidden="true">' + I.hair + '</span><span class="grow"><span class="t">' + esc(l.label) + '</span><span class="s">' + esc(lenDesc(l, sl0.cat)) + '</span></span><span class="p len-dur" data-dur="' + d + '">' + S.durTxt(d) + '</span>' + I.chev + '</button>';
+        }).join('') + '</div>' +
+        '<p class="small muted">Unsicher? Wählen Sie die längere Variante – oder rufen Sie uns an: <a href="' + telHref + '">' + esc(C.phone) + '</a></p>';
     } else if (B.step === 'staff') {
       setFoot('');
       var s = S.service(B.serviceId);
-      v.innerHTML = DEMO_BANNER + steps(2) + back('service') + '<div><h1>Bei wem?</h1><p class="muted" style="margin-top:6px">' + esc(s.name) + ' · ' + S.durTxt(s.duration) + '</p></div>' +
+      v.innerHTML = DEMO_BANNER + steps(2) + back(S.hasLengths(s) ? 'length' : 'service') + '<div><h1>Bei wem?</h1><p class="muted" style="margin-top:6px" id="sel-svc-line">' + esc(svcLine(s, B.length)) + '</p></div>' +
         '<button class="opt" type="button" data-staff="any"><span class="av" style="background:#B9A898">' + I.team + '</span><span class="grow"><span class="t">Egal – erste freie Zeit</span><span class="s">Die meisten freien Termine</span></span>' + I.chev + '</button>' +
         C.stylists.map(function (m) {
           var sub = [m.role, m.days ? m.days.map(function (d) { return S.WD_SHORT[d]; }).join(', ') : ''].filter(Boolean).join(' · ');
@@ -291,7 +320,8 @@
     else if (B.step === 'details') rDetails();
     else if (B.step === 'done') rDone();
   }
-  function slots(iso) { return S.freeSlots(state(), iso, B.serviceId, B.staffId === 'any' ? null : B.staffId); }
+  function slots(iso) { return S.freeSlots(state(), iso, B.serviceId, B.staffId === 'any' ? null : B.staffId, null, { length: B.length }); }
+  function bDur() { return S.durFor(S.service(B.serviceId), B.length); }
   function rTime() {
     var s = S.service(B.serviceId), today = S.todayISO(), days = [], first = null;
     for (var i = 0; i < C.booking.daysAhead; i++) {
@@ -308,7 +338,8 @@
       }).join('') + '</div></div>' : '';
     }).join('');
     var who = B.staffId === 'any' ? 'egal wer' : 'bei ' + S.stylist(B.staffId).name;
-    $('#v-buchen').innerHTML = DEMO_BANNER + steps(3) + back('staff') + '<div><h1>Wann passt es?</h1><p class="muted" style="margin-top:6px">' + esc(s.name) + ' · ' + S.durTxt(s.duration) + ' · ' + esc(who) + '</p></div>' +
+    $('#v-buchen').innerHTML = DEMO_BANNER + steps(3) + back('staff') + '<div><h1>Wann passt es?</h1><p class="muted" style="margin-top:6px" id="sel-svc-line">' + esc(svcLine(s, B.length)) + ' · ' + esc(who) + '</p>' +
+      '<p class="small muted" style="margin-top:4px" id="fit-note">Angezeigt werden nur Startzeiten, in die die ganze Dauer (' + S.durTxt(bDur()).replace('ca. ', '') + ') passt.</p></div>' +
       '<div class="days" id="days">' + days.map(function (x) {
         var dt = S.fromISO(x.date), wd = dt.getDay();
         return '<button class="day' + (x.date === B.date ? ' sel' : '') + '" type="button" data-day="' + x.date + '"' + (x.n ? '' : ' disabled') + ' aria-label="' + esc(S.fmtDate(x.date, true)) + (x.n ? ', ' + x.n + ' freie Zeiten' : (x.open ? ', ausgebucht' : ', geschlossen')) + '"><span>' + (x.date === today ? 'Heute' : S.WD_SHORT[wd]) + '</span><b>' + dt.getDate() + '</b><span>' + S.MONTHS[dt.getMonth()].slice(0, 3) + '</span><small>' + (!x.open ? 'zu' : (x.n ? x.n + ' frei' : 'voll')) + '</small></button>';
@@ -322,12 +353,13 @@
   function footTime() {
     if (B.time == null) { setFoot(''); return; }
     var s = S.service(B.serviceId);
-    setFoot('<div class="info"><b>' + esc(S.fmtDate(B.date)) + ', ' + S.fmtTime(B.time) + '–' + S.fmtTime(B.time + s.duration) + ' Uhr</b>' + esc(s.name) + '</div><button class="btn btn-primary btn-lg" type="button" id="time-next">Weiter</button>');
+    setFoot('<div class="info"><b>' + esc(S.fmtDate(B.date)) + ', ' + S.fmtTime(B.time) + '–' + S.fmtTime(B.time + bDur()) + ' Uhr</b>' + esc(s.name) + (B.length ? ' · ' + esc(S.lengthLabel(B.length).toLowerCase()) : '') + '</div><button class="btn btn-primary btn-lg" type="button" id="time-next">Weiter</button>');
   }
   function rDetails() {
     var s = S.service(B.serviceId);
     $('#v-buchen').innerHTML = DEMO_BANNER + steps(4) + back('time') + '<div><h1>Ihre Angaben</h1><p class="muted" style="margin-top:6px">Keine Registrierung nötig.</p></div>' +
-      '<div class="summary"><div class="row"><span>Leistung</span><span>' + esc(s.name) + '</span></div><div class="row"><span>Termin</span><span>' + esc(S.fmtDate(B.date, true)) + ', ' + S.fmtTime(B.time) + ' Uhr</span></div><div class="row"><span>Bei</span><span>' + (B.staffId === 'any' ? 'egal (wird zugeteilt)' : esc(S.stylist(B.staffId).name)) + '</span></div><div class="row"><span>Dauer · Preis</span><span>' + S.durTxt(s.duration) + ' · ' + price(s) + '*</span></div></div>' +
+      '<div class="summary"><div class="row"><span>Leistung</span><span>' + esc(s.name) + '</span></div>' + (B.length ? '<div class="row"><span>Haarlänge</span><span>' + esc(S.lengthLabel(B.length)) + '</span></div>' : '') + '<div class="row"><span>' + (S.mode() === 'anfrage' ? 'Wunschtermin' : 'Termin') + '</span><span>' + esc(S.fmtDate(B.date, true)) + ', ' + S.fmtTime(B.time) + ' Uhr</span></div><div class="row"><span>Bei</span><span>' + (B.staffId === 'any' ? 'egal (wird zugeteilt)' : esc(S.stylist(B.staffId).name)) + '</span></div><div class="row"><span>Dauer · Preis</span><span>' + S.durTxt(bDur()) + ' · ' + price(s) + '*</span></div></div>' +
+      (S.mode() === 'anfrage' ? '<div class="notice warn" id="req-explain">' + I.clock + '<div><b>Terminwunsch – noch nicht fest.</b> Ihr Wunsch geht direkt an den Salon. Sobald er bestätigt ist (oder der Salon eine andere Zeit vorschlägt), sehen Sie das unter „Meine Termine“. Erinnerungen werden erst nach der Bestätigung geplant.</div></div>' : '') +
       '<form id="b-form" novalidate style="display:flex;flex-direction:column;gap:14px">' +
       '<div class="field" id="f-name"><label for="b-name">Vor- und Nachname</label><input class="input" id="b-name" name="name" autocomplete="name" maxlength="60" required value="' + esc(B.name) + '" placeholder="z. B. Petra Schulz"><span class="errmsg">Bitte Ihren Namen angeben.</span></div>' +
       '<div class="field" id="f-phone"><label for="b-phone">Telefon / Handy</label><input class="input" id="b-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" required value="' + esc(B.phone) + '" placeholder="z. B. 0171 2345678"><span class="errmsg">Bitte eine gültige Telefonnummer angeben (z. B. 0171 2345678).</span><span class="hint">Für Rückfragen zum Termin.</span></div>' +
@@ -337,7 +369,9 @@
         return '<label class="seg-opt ' + o[0] + '"><input type="radio" name="reminder" value="' + o[0] + '"' + (B.reminder === o[0] ? ' checked' : '') + ' aria-describedby="rem-consent">' + '<span>' + o[1] + o[2] + '</span></label>';
       }).join('') + '</div><span class="hint rem-consent" id="rem-consent"></span><span class="hint rem-mobile" id="rem-mobile" hidden>' + I.info + 'Erinnerungen per WhatsApp/SMS kommen nur auf einer Handynummer an.</span></fieldset>' +
       '</form><p class="small muted">* ' + esc(C.priceNote) + '</p>';
-    setFoot('<div class="info"><b>Bezahlung im Salon</b>Kostenlos stornierbar</div><button class="btn btn-primary btn-lg" type="button" id="book-now">Verbindlich buchen</button>');
+    setFoot(S.mode() === 'anfrage'
+      ? '<div class="info"><b>Bezahlung im Salon</b>Salon bestätigt Ihren Wunsch</div><button class="btn btn-primary btn-lg" type="button" id="book-now">Terminwunsch senden</button>'
+      : '<div class="info"><b>Bezahlung im Salon</b>Kostenlos stornierbar</div><button class="btn btn-primary btn-lg" type="button" id="book-now">Verbindlich buchen</button>');
     $('#b-form').addEventListener('input', function () { readForm(); updRem(); if (B.tried) validate(); });
     $('#b-form').addEventListener('change', function () { readForm(); updRem(); });
     updRem();
@@ -358,14 +392,15 @@
   function submit() {
     readForm(); B.tried = true;
     if (!validate()) { (S.validName(B.name) ? $('#b-phone') : $('#b-name')).focus(); return; }
-    var r = S.book({ serviceId: B.serviceId, staffId: B.staffId, date: B.date, start: B.time, name: B.name, phone: B.phone, note: B.note, reminder: B.reminder });
+    var r = S.book({ serviceId: B.serviceId, length: B.length, staffId: B.staffId, date: B.date, start: B.time, name: B.name, phone: B.phone, note: B.note, reminder: B.reminder });
     if (!r.ok) { toast(r.error); B.time = null; go('time'); return; }
     B.lastId = r.booking.id; B.note = ''; B.tried = false; updateCount(); go('done');
   }
   function summaryHtml(b) {
     var s = S.service(b.serviceId), st = S.stylist(b.staffId);
-    return '<div class="summary" id="confirm-summary"><div class="row"><span>Wann</span><span>' + esc(S.fmtDate(b.date, true)) + '<br>' + S.fmtTime(b.start) + '–' + S.fmtTime(b.start + b.duration) + ' Uhr</span></div>' +
-      '<div class="row"><span>Was</span><span>' + esc(s.name) + '</span></div><div class="row"><span>Bei</span><span>' + esc(st ? st.name : 'Team') + '</span></div>' +
+    return '<div class="summary" id="confirm-summary"><div class="row"><span>' + (S.isConfirmed(b) ? 'Wann' : 'Wunsch') + '</span><span>' + esc(S.fmtDate(b.date, true)) + '<br>' + S.fmtTime(b.start) + '–' + S.fmtTime(b.start + b.duration) + ' Uhr</span></div>' +
+      '<div class="row"><span>Was</span><span>' + esc(s.name) + (b.length ? '<br><span class="small muted">Haarlänge ' + esc(S.lengthLabel(b.length).toLowerCase()) + ' · ' + S.durTxt(b.duration) + '</span>' : '') + '</span></div><div class="row"><span>Bei</span><span>' + esc(st ? st.name : 'Team') + '</span></div>' +
+      '<div class="row"><span>Status</span><span>' + reqBadge(b) + '</span></div>' +
       '<div class="row"><span>Preis</span><span>' + price(s) + ' <span class="small muted">(Beispielpreis)</span></span></div>' +
       '<div class="row"><span>Name</span><span>' + esc(b.name) + '</span></div><div class="row"><span>Telefon</span><span>' + esc(b.phone) + '</span></div>' +
       (b.note ? '<div class="row"><span>Hinweis</span><span>' + esc(b.note) + '</span></div>' : '') +
@@ -380,24 +415,48 @@
         '<button class="btn btn-primary btn-lg btn-block" type="button" data-restart>Neuen Termin buchen</button>';
       return;
     }
-    $('#v-buchen').innerHTML = DEMO_BANNER + '<div class="done-ico">' + I.check + '</div><div class="center"><h1>Termin gebucht!</h1><p class="muted" style="margin-top:8px">Wir freuen uns auf Sie, ' + esc(b.name.split(' ')[0]) + '.</p></div>' + summaryHtml(b) + remBox(b, false) +
-      '<button class="btn btn-primary btn-lg btn-block" type="button" data-ics="' + b.id + '">' + I.dl + 'In Kalender eintragen</button>' +
-      '<div id="cancel-zone"><button class="btn btn-danger btn-lg btn-block" type="button" data-cancel="' + b.id + '">' + I.x + 'Termin stornieren</button></div>' +
+    var rq = S.reqStatus(b), first = esc(b.name.split(' ')[0]);
+    var head = rq === 'angefragt'
+      ? '<div class="done-ico wait">' + I.clock + '</div><div class="center"><h1>Terminwunsch gesendet</h1><p class="muted" style="margin-top:8px">Danke, ' + first + '! Status: <span class="badge warn req-badge" data-req="angefragt">Angefragt</span><br>Der Salon bestätigt Ihren Wunsch oder schlägt eine andere Zeit vor.</p></div>'
+      : rq === 'verschoben'
+        ? '<div class="done-ico prop">' + I.swap + '</div><div class="center"><h1>Neuer Terminvorschlag</h1><p class="muted" style="margin-top:8px">Der Salon schlägt Ihnen eine andere Zeit vor, ' + first + '.</p></div>'
+        : '<div class="done-ico">' + I.check + '</div><div class="center"><h1>' + (b.mode === 'anfrage' ? 'Termin bestätigt!' : 'Termin gebucht!') + '</h1><p class="muted" style="margin-top:8px">Wir freuen uns auf Sie, ' + first + '.</p></div>';
+    $('#v-buchen').innerHTML = DEMO_BANNER + head + proposalBox(b) + summaryHtml(b) + demoBox(b) + remBox(b, false) +
+      (S.isConfirmed(b) ? '<button class="btn btn-primary btn-lg btn-block" type="button" data-ics="' + b.id + '">' + I.dl + 'In Kalender eintragen</button>' : '') +
+      '<div id="cancel-zone"><button class="btn btn-danger btn-lg btn-block" type="button" data-cancel="' + b.id + '">' + I.x + (S.isConfirmed(b) ? 'Termin stornieren' : 'Terminwunsch zurückziehen') + '</button></div>' +
       '<a class="btn btn-ghost btn-lg btn-block" href="#termine">Meine Termine</a>' +
       '<button class="btn btn-soft btn-lg btn-block" type="button" data-restart>Weiteren Termin buchen</button>' + reviewPrompt('rev-done');
+  }
+
+  /* Neuer Vorschlag des Salons: annehmen (dann fest) oder ablehnen */
+  function proposalBox(b, compact) {
+    if (S.reqStatus(b) !== 'verschoben' || !b.proposal) return '';
+    var p = b.proposal, st = S.stylist(p.staffId);
+    return '<div class="notice accent prop-box" data-prop="' + esc(b.id) + '">' + I.swap + '<div style="flex:1;min-width:0"><b>Neuer Vorschlag: ' + esc(S.fmtDate(p.date, !compact)) + ', ' + S.fmtTime(p.start) + '–' + S.fmtTime(p.start + b.duration) + ' Uhr</b>' + (st ? ' bei ' + esc(st.name) : '') +
+      '<div class="small muted" style="margin-top:2px">statt ' + esc(S.fmtDate(b.date)) + ' ' + S.fmtTime(b.start) + ' Uhr</div>' +
+      '<div class="acts" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" type="button" data-accept="' + esc(b.id) + '">' + I.check + 'Vorschlag annehmen</button><button class="btn btn-ghost btn-sm" type="button" data-decline="' + esc(b.id) + '">Ablehnen</button></div></div></div>';
+  }
+  /* Demo ohne Server: Antwort des Salons simulieren (läuft der Team-Kalender im selben Browser, antwortet er dort) */
+  function demoBox(b, compact) {
+    if (S.reqStatus(b) !== 'angefragt') return '';
+    return '<div class="demo-box' + (compact ? ' compact' : '') + '" data-demo-box="' + esc(b.id) + '"><div class="small muted">' + I.info + '<span>Demo: Im echten Betrieb antwortet der Salon im Team-Kalender' + (S.teamLinked() ? ' (in diesem Browser verbunden)' : '') + '. Hier können Sie die Antwort simulieren:</span></div>' +
+      '<div class="acts"><button class="btn btn-soft btn-sm" type="button" data-demo-confirm="' + esc(b.id) + '">' + I.check + 'Demo: Salon bestätigt</button><button class="btn btn-ghost btn-sm" type="button" data-demo-propose="' + esc(b.id) + '">' + I.swap + 'Demo: Salon schlägt andere Zeit vor</button></div></div>';
   }
 
   /* ---------------- Meine Termine ---------------- */
   function rTermine() {
     var list = S.mine(), past = S.pastMine();
-    $('#v-termine').innerHTML = DEMO_BANNER + '<div class="sec-head"><h1>Meine Termine</h1><p class="muted small">Ihre auf diesem Gerät gebuchten Termine.</p></div>' +
-      (list.some(function (b) { return CH[b.reminder]; }) ? REM_DEMO : '') +
+    $('#v-termine').innerHTML = DEMO_BANNER + '<div class="sec-head"><h1>Meine Termine</h1><p class="muted small">Ihre auf diesem Gerät gebuchten Termine und Terminwünsche.</p></div>' +
+      (list.some(function (b) { return CH[b.reminder] && S.isConfirmed(b); }) ? REM_DEMO : '') +
       (list.length ? list.map(function (b) {
         var s = S.service(b.serviceId), st = S.stylist(b.staffId);
-        return '<div class="mine-item" data-mine="' + b.id + '"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>' + esc(S.fmtDate(b.date, true)) + '</b><span class="badge ok">' + S.fmtTime(b.start) + ' Uhr</span></div>' +
-          '<div class="muted small">' + esc(s.name) + ' · ' + S.durTxt(b.duration) + ' · bei ' + esc(st ? st.name : 'Team') + '</div>' +
+        var ok = S.isConfirmed(b);
+        return '<div class="mine-item" data-mine="' + b.id + '" data-status="' + S.reqStatus(b) + '"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>' + esc(S.fmtDate(b.date, true)) + '</b><span class="badge' + (ok ? ' ok' : '') + '">' + S.fmtTime(b.start) + ' Uhr</span></div>' +
+          '<div class="muted small">' + esc(s.name) + (b.length ? ' · ' + esc(S.lengthLabel(b.length).toLowerCase()) : '') + ' · ' + S.durTxt(b.duration) + ' · bei ' + esc(st ? st.name : 'Team') + '</div>' +
+          '<div class="req-line">' + reqBadge(b) + '<span class="small muted">' + (ok ? 'Termin ist fest' : S.reqStatus(b) === 'verschoben' ? 'Bitte Vorschlag annehmen oder ablehnen' : 'wartet auf Bestätigung durch den Salon') + '</span></div>' +
+          proposalBox(b, true) + demoBox(b, true) +
           remBox(b, true) +
-          '<div class="acts"><button class="btn btn-ghost btn-sm" type="button" data-ics="' + b.id + '">' + I.dl + 'Kalender</button><span class="cz" style="display:contents"><button class="btn btn-danger btn-sm" type="button" data-cancel="' + b.id + '">Stornieren</button></span></div></div>';
+          '<div class="acts">' + (ok ? '<button class="btn btn-ghost btn-sm" type="button" data-ics="' + b.id + '">' + I.dl + 'Kalender</button>' : '') + '<span class="cz" style="display:contents"><button class="btn btn-danger btn-sm" type="button" data-cancel="' + b.id + '">' + (ok ? 'Stornieren' : 'Zurückziehen') + '</button></span></div></div>';
       }).join('') : '<div class="empty"><span>Noch keine kommenden Termine auf diesem Gerät.</span><a class="btn btn-primary" href="#buchen">' + I.cal + 'Termin buchen</a></div>') +
       (past.length ? '<div class="sec-head" style="margin-top:6px"><h2>Vergangene Termine</h2></div>' + reviewPrompt('rev-past') + past.map(function (b) {
         var s = S.service(b.serviceId), st = S.stylist(b.staffId);
@@ -420,9 +479,25 @@
     document.querySelectorAll('[data-nav]').forEach(function (a) { var on = a.getAttribute('data-nav') === name; a.classList.toggle('active', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     if (name !== 'buchen') setFoot('');
     closePhone(true);
+    S.applyDurations(); S.sync();
     RENDER[name]();
     window.scrollTo(0, 0);
   }
+  /* Antwort des Salons / geänderte Einstellungen aus dem Team-Kalender (anderer Tab im selben Browser) sofort übernehmen */
+  function refreshFromBridge(fromEvent) {
+    var before = {}; S.mine().forEach(function (b) { before[b.id] = S.reqStatus(b); });
+    S.applyDurations(); var changed = S.sync();
+    S.mine().forEach(function (b) {
+      if (before[b.id] && before[b.id] !== S.reqStatus(b)) toast(S.reqStatus(b) === 'bestaetigt' ? 'Der Salon hat Ihren Termin bestätigt' : S.reqStatus(b) === 'verschoben' ? 'Neuer Terminvorschlag vom Salon' : 'Status aktualisiert');
+    });
+    updateCount();
+    if (!fromEvent && !changed) return;
+    if (current === 'buchen' && B.step === 'details') return; // Eingaben nicht verlieren
+    if (current === 'buchen' && (B.step === 'time' || B.step === 'service' || B.step === 'length' || B.step === 'staff' || B.step === 'done')) { rBuchen(); return; }
+    if (current === 'termine' || current === 'start' || current === 'leistungen') RENDER[current]();
+  }
+  window.addEventListener('storage', function (e) { if (e.key === C.bridgeKey || e.key === C.storageKey) refreshFromBridge(true); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshFromBridge(false); });
   window.addEventListener('hashchange', route);
 
   /* ---------------- Klicks ---------------- */
@@ -434,24 +509,30 @@
     if ((t = e.target.closest('[data-rem-chat]'))) { var op = phoneOpener; openPhone(t.getAttribute('data-rem-chat'), 'chat', op); return; }
     if ((t = e.target.closest('[data-rem-close]')) || e.target.id === 'rem-preview') { closePhone(); return; }
     if ((t = e.target.closest('[data-cat]'))) { var c = t.getAttribute('data-cat'); e.preventDefault(); if (current !== 'leistungen') location.hash = '#leistungen'; setTimeout(function () { var el = document.getElementById('cat-' + c); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30); return; }
-    if ((t = e.target.closest('[data-service]'))) { B.serviceId = t.getAttribute('data-service'); B.time = null; B.date = null; go('staff'); return; }
+    if ((t = e.target.closest('[data-service]'))) { B.serviceId = t.getAttribute('data-service'); B.time = null; B.date = null; B.length = null; go(S.hasLengths(S.service(B.serviceId)) ? 'length' : 'staff'); return; }
+    if ((t = e.target.closest('[data-length]'))) { B.length = t.getAttribute('data-length'); B.time = null; B.date = null; go('staff'); return; }
+    if ((t = e.target.closest('[data-demo-confirm]'))) { S.demoConfirm(t.getAttribute('data-demo-confirm')); toast('Demo: Der Salon hat Ihren Termin bestätigt'); updateCount(); RENDER[current](); return; }
+    if ((t = e.target.closest('[data-demo-propose]'))) { var pr = S.demoPropose(t.getAttribute('data-demo-propose')); toast(pr ? 'Demo: Neuer Terminvorschlag vom Salon' : 'Kein anderer freier Termin gefunden'); RENDER[current](); return; }
+    if ((t = e.target.closest('[data-accept]'))) { S.acceptProposal(t.getAttribute('data-accept')); toast('Vorschlag angenommen – Termin ist fest'); updateCount(); RENDER[current](); return; }
+    if ((t = e.target.closest('[data-decline]'))) { S.cancel(t.getAttribute('data-decline'), 'Vorschlag abgelehnt'); toast('Vorschlag abgelehnt – Terminwunsch zurückgezogen'); updateCount(); RENDER[current](); return; }
     if ((t = e.target.closest('[data-staff]'))) { B.staffId = t.getAttribute('data-staff'); B.time = null; B.date = null; go('time'); return; }
     if ((t = e.target.closest('[data-day]'))) { if (t.disabled) return; B.date = t.getAttribute('data-day'); B.time = null; rTime(); return; }
     if ((t = e.target.closest('[data-time]'))) { B.time = +t.getAttribute('data-time'); document.querySelectorAll('.time').forEach(function (x) { x.classList.toggle('sel', x === t); }); footTime(); return; }
     if ((t = e.target.closest('#time-next'))) { go('details'); return; }
     if ((t = e.target.closest('#book-now'))) { submit(); return; }
     if ((t = e.target.closest('[data-bstep]'))) { go(t.getAttribute('data-bstep')); return; }
-    if ((t = e.target.closest('[data-restart]'))) { B.step = 'service'; B.serviceId = null; B.time = null; B.date = null; B.staffId = 'any'; if (current !== 'buchen') location.hash = '#buchen'; else go('service'); return; }
+    if ((t = e.target.closest('[data-restart]'))) { B.step = 'service'; B.serviceId = null; B.length = null; B.time = null; B.date = null; B.staffId = 'any'; if (current !== 'buchen') location.hash = '#buchen'; else go('service'); return; }
     if ((t = e.target.closest('[data-ics]'))) { downloadIcs(t.getAttribute('data-ics')); return; }
     if ((t = e.target.closest('[data-cancel]'))) {
       var id = t.getAttribute('data-cancel'), b = S.get(id), holder = t.parentNode;
-      holder.innerHTML = '<div class="confirm-cancel" style="width:100%"><span>Termin am <b>' + esc(S.fmtDate(b.date)) + ' um ' + S.fmtTime(b.start) + ' Uhr</b> wirklich stornieren?</span><div class="acts"><button class="btn btn-ghost btn-sm" type="button" data-keep>Behalten</button><button class="btn btn-bad btn-sm" type="button" data-cancel-yes="' + id + '">Ja, stornieren</button></div></div>';
+      var cw = S.isConfirmed(b) ? ['Termin am', 'wirklich stornieren?', 'Ja, stornieren'] : ['Terminwunsch für', 'zurückziehen?', 'Ja, zurückziehen'];
+      holder.innerHTML = '<div class="confirm-cancel" style="width:100%"><span>' + cw[0] + ' <b>' + esc(S.fmtDate(b.date)) + ' um ' + S.fmtTime(b.start) + ' Uhr</b> ' + cw[1] + '</span><div class="acts"><button class="btn btn-ghost btn-sm" type="button" data-keep>Behalten</button><button class="btn btn-bad btn-sm" type="button" data-cancel-yes="' + id + '">' + cw[2] + '</button></div></div>';
       return;
     }
     if ((t = e.target.closest('[data-keep]'))) { RENDER[current](); return; }
-    if ((t = e.target.closest('[data-cancel-yes]'))) { S.cancel(t.getAttribute('data-cancel-yes')); updateCount(); toast('Termin storniert'); RENDER[current](); return; }
+    if ((t = e.target.closest('[data-cancel-yes]'))) { var cb = S.get(t.getAttribute('data-cancel-yes')), wasOk = S.isConfirmed(cb); S.cancel(cb.id); updateCount(); toast(wasOk ? 'Termin storniert' : 'Terminwunsch zurückgezogen'); RENDER[current](); return; }
     if ((t = e.target.closest('[data-install]')) || (t = e.target.closest('#install-btn'))) { doInstall(); return; }
-    if ((t = e.target.closest('#wipe'))) { localStorage.removeItem(C.storageKey); B.lastId = null; B.step = 'service'; updateCount(); toast('Demo-Daten gelöscht'); return; }
+    if ((t = e.target.closest('#wipe'))) { localStorage.removeItem(C.storageKey); try { var bx = JSON.parse(localStorage.getItem(C.bridgeKey) || 'null'); if (bx && bx.requests) { bx.requests = bx.requests.filter(function (r) { return r.origin !== 'kunden-app'; }); localStorage.setItem(C.bridgeKey, JSON.stringify(bx)); } } catch (er) { /* egal */ } B.lastId = null; B.step = 'service'; updateCount(); toast('Demo-Daten gelöscht'); return; }
   });
   function downloadIcs(id) {
     var b = S.get(id); if (!b) return;
@@ -506,5 +587,5 @@
   setInterval(function () { if (current === 'start' || current === 'zeiten') RENDER[current](); }, 60000);
 
   state(); updateCount(); net(); route();
-  window.SalonApp = { B: B, go: go, remTexts: remTexts };
+  window.SalonApp = { B: B, go: go, remTexts: remTexts, refresh: refreshFromBridge };
 })();

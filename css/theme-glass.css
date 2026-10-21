@@ -228,3 +228,11 @@ html[data-theme="glass"] .design-pick { padding-top: 2px; }
 @media (prefers-reduced-transparency: reduce) {
   html[data-theme="glass"] .top, html[data-theme="glass"] .bnav, html[data-theme="glass"] .b-foot, html[data-theme="glass"] .sheet, html[data-theme="glass"] .tp-panel { background: #FAF8F5; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* ---------- Haarlänge & Terminwunsch (Glas) ---------- */
+html[data-theme="glass"] .len-av { background: rgba(242,233,224,.9) !important; box-shadow: var(--g-shine); }
+html[data-theme="glass"] .len-opt.sel { background: rgba(255,255,255,.9); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 10px 26px -16px rgba(156,74,48,.55); }
+html[data-theme="glass"] .done-ico.wait { background: rgba(248,237,214,.92); box-shadow: var(--g-shine), 0 12px 30px -14px rgba(168,106,18,.5); }
+html[data-theme="glass"] .done-ico.prop { background: rgba(242,233,224,.92); box-shadow: var(--g-shine), 0 12px 30px -14px rgba(156,74,48,.5); }
+html[data-theme="glass"] .demo-box { background: rgba(255,249,238,.62); border-color: rgba(217,195,163,.9); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); }
+html[data-theme="glass"] .mine-item[data-status="angefragt"] { box-shadow: inset 0 0 0 1px rgba(233,211,174,.9); }
