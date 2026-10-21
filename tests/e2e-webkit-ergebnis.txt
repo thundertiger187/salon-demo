@@ -1,4 +1,4 @@
-WebKit iPhone 14 – 20/20 bestanden
+WebKit iPhone 14 – 23/23 bestanden
 OK   WebKit/iPhone 14: Seite lädt – {'width': 390, 'height': 664} UA iPhone
 OK   apple-touch-icon 180x180 lädt
 OK   iOS-Meta-Tags vorhanden – ['yes', 'yes', 'default', 'Da Giovanni', '#F6F1EA']
@@ -13,9 +13,12 @@ OK   kein Überlauf (zeiten) – [390, 390]
 OK   kein Überlauf (kontakt) – [390, 390]
 OK   kein Überlauf (termine) – [390, 390]
 OK   Bewertungs-Karte (iOS) mit Schreib-Link
-OK   Buchung in WebKit – 09:00
+OK   Buchung in WebKit – 11:00
 OK   Bewertungs-Bitte nach Buchung (iOS)
-OK   iOS: WhatsApp-Link wa.me + SMS-Link sms:+…?&body= – sms:+49211241886?&body=Hallo%20Haardesign%20Da%20Giovanni%2C
-OK   kein Überlauf (Senden-Box) – [390, 390]
+OK   iOS: Erinnerungen geplant (WhatsApp vorausgewählt, 2 Zeitpunkte)
+OK   iOS: keine „an den Salon senden“-Links
+OK   iOS: WhatsApp-Vorschau passt in den Bildschirm – [[390, 390], {'x': 25, 'y': 29.484375, 'width': 340, 'height': 514}]
+OK   iOS: Sperrbildschirm-Mitteilung
+OK   iOS: Dialog schließt
 OK   Standalone (navigator.standalone): kein Install-Hinweis
 OK   Keine Konsolen-/Seitenfehler (WebKit) – []

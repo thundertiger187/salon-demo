@@ -6,6 +6,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE, SUB, PORT = '/tmp/site-wk', 'salon-demo', 8766
 BASE = f'http://localhost:{PORT}/{SUB}/'
 results, errors = [], []
+GLASS = os.environ.get('THEME') == 'glass'  # THEME=glass → Lauf im Design „Glas“
+GLASS_INIT = "try { localStorage.setItem('dg-kunden-design', 'glass'); } catch (e) {}"
 def check(n, c, d=''):
     results.append((n, bool(c), d)); print(('  ✓ ' if c else '  ✗ ') + n + (f' – {d}' if d != '' else ''), flush=True)
 shutil.rmtree(SITE, ignore_errors=True)
@@ -19,6 +21,7 @@ try:
         b = p.webkit.launch()
         dev = dict(p.devices['iPhone 14'])
         ctx = b.new_context(**dev, locale='de-DE', timezone_id='Europe/Berlin')
+        if GLASS: ctx.add_init_script(GLASS_INIT)
         pg = ctx.new_page()
         pg.on('console', lambda m: errors.append(f'console.{m.type}: {m.text}') if m.type == 'error' else None)
         pg.on('pageerror', lambda e: errors.append(f'pageerror: {e}'))
@@ -34,30 +37,33 @@ try:
         pg.click('#install-card [data-install]'); pg.wait_for_selector('#ios-sheet .sheet'); pg.wait_for_timeout(600)
         txt = pg.inner_text('#ios-sheet')
         check('iOS-Hinweis: Teilen → Zum Home-Bildschirm → Hinzufügen', 'Teilen' in txt and 'Zum Home-Bildschirm' in txt and 'Hinzufügen' in txt)
-        pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-installieren.png'))
+        pg.screenshot(path=os.path.join(ROOT, 'screens', ('glas-' if GLASS else '') + 'ios-installieren.png'))
         pg.click('[data-sheet-close]'); check('Hinweis schließt', pg.locator('#ios-sheet').count() == 0)
         for h in ['start', 'leistungen', 'buchen', 'zeiten', 'kontakt', 'termine']:
             pg.goto(BASE + '#' + h); pg.wait_for_selector(f'#v-{h}.active'); pg.wait_for_timeout(150)
             w = pg.evaluate('[document.documentElement.scrollWidth, innerWidth]'); check(f'kein Überlauf ({h})', w[0] <= w[1], w)
-        pg.goto(BASE + '#start'); pg.wait_for_selector('.hero'); pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-start.png'))
+        pg.goto(BASE + '#start'); pg.wait_for_selector('.hero'); pg.screenshot(path=os.path.join(ROOT, 'screens', ('glas-' if GLASS else '') + 'ios-start.png'))
         check('Bewertungs-Karte (iOS) mit Schreib-Link', pg.locator('#rev-start').is_visible() and 'writereview?placeid=ChIJnxzAeNTNuEcRSB6MdPd67FY' in pg.get_attribute('#rev-start [data-review=write]', 'href'))
-        pg.evaluate("document.getElementById('rev-start').scrollIntoView()"); pg.wait_for_timeout(200); pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-bewertungen.png'))
+        pg.evaluate("document.getElementById('rev-start').scrollIntoView()"); pg.wait_for_timeout(200); pg.screenshot(path=os.path.join(ROOT, 'screens', ('glas-' if GLASS else '') + 'ios-bewertungen.png'))
         pg.goto(BASE + '#buchen'); pg.click('[data-service="d-schnitt"]'); pg.click('[data-staff="any"]'); pg.wait_for_selector('.time')
         t = pg.locator('.time').first; tm = t.inner_text(); t.click(); pg.click('#time-next')
         pg.fill('#b-name', 'Iris Test'); pg.fill('#b-phone', '0151 1234567'); pg.click('#book-now'); pg.wait_for_selector('#confirm-summary')
         check('Buchung in WebKit', tm in pg.inner_text('#confirm-summary'), tm)
         check('Bewertungs-Bitte nach Buchung (iOS)', pg.locator('#rev-done').is_visible())
-        pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-bestaetigung.png'))
+        pg.screenshot(path=os.path.join(ROOT, 'screens', ('glas-' if GLASS else '') + 'ios-bestaetigung.png'))
         check('iOS: Erinnerungen geplant (WhatsApp vorausgewählt, 2 Zeitpunkte)', pg.locator('#v-buchen [data-rembox=whatsapp] .rem-item').count() == 2 and '2 Tage vorher' in pg.inner_text('#v-buchen .rem-list') and '2 Stunden vorher' in pg.inner_text('#v-buchen .rem-list'))
         check('iOS: keine „an den Salon senden“-Links', pg.locator('a[href^="https://wa.me"], a[href^="sms:"]').count() == 0)
         pg.click('#v-buchen [data-rem-preview]'); pg.wait_for_selector('#rem-preview .phone.whatsapp'); pg.wait_for_timeout(300)
         w = pg.evaluate('[document.documentElement.scrollWidth, innerWidth]'); bb = pg.locator('#rem-preview .phone').bounding_box()
         check('iOS: WhatsApp-Vorschau passt in den Bildschirm', w[0] <= w[1] and bb['x'] >= 0 and bb['x'] + bb['width'] <= w[1] and 'kleine Erinnerung' in pg.inner_text('#rem-preview .ph-bubble[data-rem=d2]'), [w, bb])
-        pg.screenshot(path=os.path.join(ROOT, 'screens', 'ios-erinnerung-vorschau.png'))
+        pg.screenshot(path=os.path.join(ROOT, 'screens', ('glas-' if GLASS else '') + 'ios-erinnerung-vorschau.png'))
         pg.click('[data-rem-close]'); pg.click('#v-buchen [data-rem-demo]'); pg.wait_for_selector('#rem-preview .ph-notif'); pg.wait_for_timeout(1100)
         check('iOS: Sperrbildschirm-Mitteilung', pg.locator('#rem-preview .ph-notif').is_visible())
         pg.click('[data-rem-close]'); check('iOS: Dialog schließt', pg.locator('#rem-preview').count() == 0)
         # Standalone (vom Home-Bildschirm gestartet): Install-Hinweis muss verschwinden
+        if GLASS:
+            bf = pg.evaluate("(() => { const cs = getComputedStyle(document.querySelector('.top')); return [document.documentElement.getAttribute('data-theme'), cs.webkitBackdropFilter || cs.backdropFilter]; })()")
+            check('WebKit: Design Glas aktiv, -webkit-backdrop-filter greift', bf[0] == 'glass' and 'blur' in (bf[1] or ''), bf)
         ctx2 = b.new_context(**dev, locale='de-DE'); p2 = ctx2.new_page()
         p2.add_init_script("Object.defineProperty(navigator, 'standalone', { get: () => true });")
         p2.goto(BASE); p2.wait_for_selector('.hero'); p2.wait_for_timeout(300)
@@ -67,5 +73,5 @@ finally:
     srv.terminate()
 check('Keine Konsolen-/Seitenfehler (WebKit)', not errors, errors[:8])
 ok = sum(r[1] for r in results)
-open(os.path.join(ROOT, 'tests', 'e2e-webkit-ergebnis.txt'), 'w', encoding='utf-8').write(f'WebKit iPhone 14 – {ok}/{len(results)} bestanden\n' + '\n'.join(('OK   ' if r[1] else 'FAIL ') + r[0] + (f' – {r[2]}' if r[2] != '' else '') for r in results) + '\n')
+open(os.path.join(ROOT, 'tests', 'e2e-webkit-ergebnis-glas.txt' if GLASS else 'e2e-webkit-ergebnis.txt'), 'w', encoding='utf-8').write(f'WebKit iPhone 14{" (Design Glas)" if GLASS else ""} – {ok}/{len(results)} bestanden\n' + '\n'.join(('OK   ' if r[1] else 'FAIL ') + r[0] + (f' – {r[2]}' if r[2] != '' else '') for r in results) + '\n')
 print(f'{ok}/{len(results)} bestanden'); sys.exit(0 if ok == len(results) else 1)

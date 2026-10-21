@@ -60,7 +60,13 @@
   function state() { return S.seed(S.load()); }
   function toast(msg) { var t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600); }
   function footLinks() {
-    return '<div class="foot-links"><a href="#impressum">Impressum</a><a href="#datenschutz">Datenschutz</a>' + (C.facebook ? '<a href="' + esc(C.facebook) + '" target="_blank" rel="noopener">Facebook</a>' : '') + '</div>';
+    return '<div class="foot-links"><a href="#impressum">Impressum</a><a href="#datenschutz">Datenschutz</a>' + (C.facebook ? '<a href="' + esc(C.facebook) + '" target="_blank" rel="noopener">Facebook</a>' : '') + '</div>' + designPick();
+  }
+  /* Design-Umschalter (js/theme.js): „Klassisch“ (Standard) oder „Glas“ – gespeichert pro Gerät */
+  function designPick() {
+    var t = window.DGTheme ? DGTheme.get() : 'klassisch';
+    function b(k, l) { return '<button type="button" data-theme-set="' + k + '" aria-pressed="' + (t === k) + '"' + (t === k ? ' class="active"' : '') + '>' + l + '</button>'; }
+    return '<div class="design-pick" role="group" aria-label="Design der App"><span class="dp-label">Design</span><span class="dp-seg">' + b('klassisch', 'Klassisch') + b('glass', 'Glas') + '</span></div>';
   }
 
   /* ---------------- Terminerinnerungen (Demo) ----------------

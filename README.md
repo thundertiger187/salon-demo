@@ -73,6 +73,17 @@ Die Kundin selbst schickt nichts an den Salon.
 | Hochsteckfrisur | ca. 1 Std. | :00/:30 |
 | Pflegekur | ca. 15 Min. | alle 15 Min. |
 
+## Design „Klassisch“ / „Glas“ (ab v7)
+Zwei umschaltbare Designs, eine Codebasis. **Klassisch** (Standard) = bisheriges Design (Sand/Terrakotta).
+**Glas** = hell & ruhig im Stil moderner Salon-Websites (warmes Off-White, Greige, Tinte, große leichte Fraunces-Serife mit kursiver Betonung,
+feine Linien, viel Weißraum) plus „Liquid Glass“ wie iOS 26: Kopfzeile, schwebende Navigation, Buchungsleiste und Dialoge aus Milchglas
+(`backdrop-filter: blur() saturate()` inkl. `-webkit-`), Karten halbtransparent mit heller Innenkante (ohne Blur – schont Handys).
+- Umschalter: Fußzeile jeder Seite → **„Design: Klassisch | Glas“**. Gespeichert pro Gerät (`localStorage` `dg-kunden-design`).
+- Dateien: `js/theme.js` (lädt im `<head>`, setzt `<html data-theme="glass">`, kein Aufblitzen), `css/theme-glass.css` (alle Regeln unter `html[data-theme="glass"]`),
+  `assets/fonts/fraunces-italic-latin.woff2` (Kursiv-Schnitt, Teilmenge, OFL).
+- Ohne `backdrop-filter` (sehr alte Browser) bzw. bei „Transparenz reduzieren“: fast deckende Flächen, gleiches Layout.
+- Tests im Glas-Design: `THEME=glass python3 tests/e2e.py` · `THEME=glass python3 tests/e2e_webkit.py`
+
 ## Google-Bewertungen
 - Links in `js/config.js` → `reviews`: Place ID `ChIJnxzAeNTNuEcRSB6MdPd67FY` (aus Google Maps ermittelt, ohne API-Schlüssel;
   dekodiert zur Maps-ID `0x47b8cdd478c01c9f:0x56ec7af7748c1e48` des Eintrags „Haardesign Da Giovanni, Bahnstraße 63“).

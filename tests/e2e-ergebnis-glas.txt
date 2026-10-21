@@ -1,0 +1,143 @@
+E2E (Design Glas) 2026-10-21 08:50 – 136/136 bestanden – http://localhost:8765/salon-demo/
+OK   Startseite lädt unter Unterpfad
+OK   Service Worker registriert, Scope = Unterpfad – http://localhost:8765/salon-demo/
+OK   Service Worker kontrolliert die Seite – http://localhost:8765/salon-demo/sw.js
+OK   Versionierter Cache mit allen Assets – {'keys': ['salon-pwa-v7'], 'n': 22}
+OK   Manifest Content-Type – application/manifest+json
+OK   Manifest Felder (name/short_name/display/start_url/scope/Farben) – {'name': 'Haardesign Da Giovanni', 'short_name': 'Da Giovanni', 'start_url': './', 'scope': './', 'display': 'standalone'}
+OK   Icon lädt icons/icon-192.png (any) – 192x192
+OK   Icon lädt icons/icon-512.png (any) – 512x512
+OK   Icon lädt icons/icon-512-maskable.png (maskable) – 512x512
+OK   192er + 512er + maskable vorhanden
+OK   apple-touch-icon lädt – 200
+OK   meta theme-color gesetzt
+OK   Chrome-Installierbarkeit (Page.getInstallabilityErrors leer) – {'installabilityErrors': []}
+OK   Chrome parst Manifest ohne Fehler – []
+OK   „App installieren“ nur bei beforeinstallprompt sichtbar – beforeinstallprompt=False, Karte sichtbar=False
+OK   Hero-Buttons Termin buchen + Anrufen
+OK   Name im Kopf aus Konfiguration
+OK   kein horizontales Überlaufen (start) – [390, 390]
+OK   Bewertungs-Karte unter dem Hero
+OK   Sterne + 4,9 + 97 Bewertungen + Stand – GOOGLE-BEWERTUNGEN | Stand: Oktober 2026 | 4,9 | 97 Bewertungen auf Google | Bewertung schreiben | Alle Bewertungen auf Google lesen
+OK   „Bewertung schreiben“ → writereview?placeid
+OK   „Alle Bewertungen auf Google lesen“ → reviews?placeid
+OK   Keine erfundenen Rezensionstexte
+OK   „Beispielpreise“ sichtbar in Leistungen
+OK   Dauer-Anzeige „ca. …“ (30 Min., 1 Std., 1,5 Std., 3 Std.)
+OK   Kategorien Damen/Herren/Kinder/Farbe
+OK   kein horizontales Überlaufen (leistungen) – [390, 390]
+OK   Heute hervorgehoben – MittwochHeute
+09:00–18:00 Uhr
+OK   Status „Jetzt geöffnet/geschlossen“ – Jetzt geschlossen
+OK   Hinweis „Zeiten vorläufig“ genau dann, wenn hoursProvisional – hoursProvisional=False
+OK   Echte Zeiten: Di–Do 9–18, Fr 9–20, Sa 8:30–13 – Montag | geschlossen | Dienstag | 09:00–18:00 Uhr | MittwochHeute | 09:00–18:00 Uhr | Donnerstag | 09:00–18:00 Uhr | Freitag | 09:00–20:00 Uhr | Samstag | 08:30–13:00 Uhr | Sonntag | geschlossen
+OK   Mo + So geschlossen
+OK   kein horizontales Überlaufen (zeiten) – [390, 390]
+OK   Demo-Banner sichtbar
+OK   Team-Auswahl: egal + 5 Namen – ['Egal – erste freie Zeit', 'Giovanni', 'Marco', 'Jenny', 'Julia', 'Anny']
+OK   14 Tage angezeigt – 14
+OK   Mo/So (geschlossen) deaktiviert
+OK   freie Tage vorhanden
+OK   Demo-Termine belegen Zeiten (weniger Slots als theoretisch) – 5 frei von 9, 4 Demo-Termine
+OK   Keine Slot-Überschneidung mit Terminen – []
+OK   Alle Slots innerhalb der Öffnungszeiten (inkl. Dauer) – []
+OK   Herrenschnitt (UI): alle Startzeiten auf :00/:30 – ['09:30', '10:00', '11:00', '11:30', '12:30']
+OK   Herrenschnitt (14 Tage): nie :15/:45 – []
+OK   15-Min.-Leistungen: :15/:45 werden angeboten – 664 Startzeiten auf :15/:45
+OK   Demo-Termine ≥ 30 Min. liegen auf :00/:30 – 0
+OK   Balayage Samstag: letzte Startzeit ≤ 10:00 (Schluss 13:00) – leerer Sa: ['08:30', '09:00', '09:30', '10:00']; mit Demo-Terminen letzte: ['10:00', None]
+OK   Alle Startzeiten enden vor Ladenschluss – []
+OK   kein horizontales Überlaufen (slots) – [390, 390]
+OK   Validierung: leere Felder → Fehlermeldung
+OK   Validierung: ungültige Telefonnummer abgelehnt
+OK   Erinnerung: WhatsApp vorausgewählt (WhatsApp / SMS / Keine)
+OK   Einwilligungs-Zeile „Ich möchte Terminerinnerungen per WhatsApp erhalten …“ – Ich möchte Terminerinnerungen per WhatsApp erhalten – 2 Tage und 2 Stunden vorher, an die oben angegebene Nummer. Jederzeit abbestellbar.
+OK   Kein Handy-Hinweis bei Handynummer
+OK   Hinweis „nur auf Handynummer“ bei Festnetz
+OK   Einwilligung folgt der Auswahl (SMS / Keine) – ['Ich möchte Terminerinnerungen per SMS erhalten – 2 Tage und 2 Stunden vorher, an die oben angegebene Nummer. Jederzeit abbestellbar.', 'Sie erhalten keine Terminerinnerungen.']
+OK   Bewertungs-Bitte auf Bestätigungsseite
+OK   Bestätigung mit Zusammenfassung – Wann | Samstag, 24. Oktober 2026 | 11:00–11:30 Uhr | Was | Herrenschnitt inkl. Waschen | Bei | Giovanni | Preis | 27 € (Beispielpreis) | Name | Petra Schulz | T
+OK   kein horizontales Überlaufen (bestaetigung) – [390, 390]
+OK   Buchung speichert Kanal reminder = whatsapp
+OK   „Erinnerungen geplant“ per WhatsApp an Telefonnummer
+OK   Exakte Erinnerungszeiten (2 Tage / 2 Stunden vorher) + Status – [['Do, 22.10. um 11:00 Uhr – 2 Tage vorher', 'geplant', False], ['Sa, 24.10. um 09:00 Uhr – 2 Stunden vorher', 'geplant', False]]
+OK   Kanal-Symbol WhatsApp
+OK   Demo-Hinweis „im echten Betrieb verschickt der Salon-Server …“
+OK   Keine „an den Salon senden“-Buttons mehr
+OK   kein horizontales Überlaufen (bestaetigung erinnerung) – [390, 390]
+OK   Vorschau: Dialog (aria-modal) im WhatsApp-Stil
+OK   Vorschau-Text 2 Tage vorher (Name, Wochentag, Datum, Uhrzeit, Leistung, Mitarbeiter, Link) – Hallo Petra, kleine Erinnerung: Ihr Termin bei Haardesign Da Giovanni ist am Samstag, 24.10. um 11:00 Uhr (Herrenschnitt inkl. Waschen bei Giovanni). Absagen oder verschieben bis 24 Std. vorher: http://localhost:8765/salon-demo/#termine. Bis bald!
+OK   Vorschau-Text 2 Stunden vorher – Hallo Petra, in 2 Stunden um 11:00 Uhr sehen wir uns bei Haardesign Da Giovanni, Bahnstraße 63, Erkrath. Bis gleich!
+OK   Link zu „Meine Termine“ in der Nachricht
+OK   Blasen mit Uhrzeit (= Versandzeit) + Häkchen – ['11:00', '09:00']
+OK   kein horizontales Überlaufen (vorschau whatsapp) – [390, 390]
+OK   Vorschau schließt mit Esc, Fokus zurück auf Button
+OK   „Demo: Erinnerung jetzt zeigen“: Sperrbildschirm mit WhatsApp-Mitteilung – WhatsApp | jetzt | Haardesign Da Giovanni | Hallo Petra, kleine Erinnerung: Ihr Termin bei
+OK   Sperrbildschirm-Uhrzeit = nächste geplante Erinnerung – 11:00
+OK   Mitteilung antippen → Chat-Vorschau
+OK   .ics-Download (In Kalender eintragen) – friseurtermin-2026-10-24.ics
+OK   Meine-Termine-Zähler = 1
+OK   Gebuchter Slot verschwindet (und überlappende) – 5 → 4
+OK   Meine Termine listet die Buchung
+OK   kein horizontales Überlaufen (termine) – [390, 390]
+OK   Meine Termine: Erinnerungen mit Zeiten + Vorschau-Button – [['Do, 22.10. um 11:00 Uhr – 2 Tage vorher', 'geplant', False], ['Sa, 24.10. um 09:00 Uhr – 2 Stunden vorher', 'geplant', False]]
+OK   Meine Termine: Demo-Hinweis einmal oben
+OK   Link in der Vorschau führt zu Meine Termine (Dialog zu)
+OK   Stornieren in Meine Termine
+OK   Nach Storno ist der Slot wieder frei
+OK   Festnetz +49 211 … mit SMS → Handy-Hinweis
+OK   Kanal SMS gespeichert + angezeigt
+OK   SMS-Buchung: Zeiten/Status (kurzfristig → „entfällt“ möglich) – [['Mo, 19.10. um 10:00 Uhr – 2 Tage vorher', 'entfällt', True], ['Mi, 21.10. um 08:00 Uhr – 2 Stunden vorher', 'entfällt', True]]
+OK   SMS-Vorschau: Absender „Da Giovanni“, graue Blasen, keine Häkchen
+OK   SMS-Vorschau: beide Texte korrekt – Hallo Max, in 2 Stunden um 10:00 Uhr sehen wir uns bei Haardesign Da Giovanni, Bahnstraße 63, Erkrath. Bis gleich!
+OK   Vorschau: „entfällt“-Hinweis genau bei entfallenden Erinnerungen
+OK   kein horizontales Überlaufen (vorschau sms) – [390, 390]
+OK   Buchung „egal“ teilt Friseur:in zu – Jenny
+OK   „Termin stornieren“ auf Bestätigungsseite
+OK   Mi 21.10. 10:30 → Mo 19.10. 10:30 + Mi 21.10. 08:30, beide geplant – ['Mo, 19.10. 10:30 geplant', 'Mi, 21.10. 08:30 geplant']
+OK   Nach Erreichen: „verschickt“ – ['Mo, 19.10. 10:30 verschickt', 'Mi, 21.10. 08:30 geplant']
+OK   Kurzfristig (am Vortag gebucht): 2-Tage-Erinnerung entfällt – ['Mo, 19.10. 10:30 entfaellt', 'Mi, 21.10. 08:30 geplant']
+OK   Sehr kurzfristig (< 2 Std.): beide entfallen – ['Mo, 19.10. 10:30 entfaellt', 'Mi, 21.10. 08:30 entfaellt']
+OK   Zeitumstellung 25.10.: 2 Tage vorher = gleiche Uhrzeit – ['So, 25.10. 10:30 geplant', 'Di, 27.10. 08:30 geplant']
+OK   Kanal „Keine“ → keine Erinnerungen
+OK   UI: morgen gebucht → „2 Tage vorher … entfällt“ (durchgestrichen), 2 Std. geplant – [[['Di, 20.10. um 23:00 Uhr – 2 Tage vorher', 'entfällt', True], ['Do, 22.10. um 21:00 Uhr – 2 Stunden vorher', 'geplant', False]], 'entfällt – Termin kurzfristig gebucht']
+OK   Click-to-call tel:+49211241886
+OK   Google-Maps-Link mit Salon-Query – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY
+OK   Bewertungs-Karte in Kontakt
+OK   Google-Maps-Link mit query_place_id – https://www.google.com/maps/search/?api=1&query=Haardesign%20Da%20Giovanni%2C%20Bahnstra%C3%9Fe%2063%2C%2040699%20Erkrath&query_place_id=ChIJnxzAeNTNuEcRSB6MdPd67FY
+OK   Facebook-Link
+OK   Kein WhatsApp-Link
+OK   OSM-iframe mit Marker 51.2219/6.9126 – https://www.openstreetmap.org/export/embed.html?bbox=6.90661%2C51.21833%2C6.91861%2C51.22553&layer=mapnik&marker=51.2219329%2C6.9126149
+OK   OSM-Karte geladen
+OK   kein horizontales Überlaufen (kontakt) – [390, 390]
+OK   Impressum-Platzhalter
+OK   Datenschutz-Platzhalter
+OK   Vergangene Termine + Bewertungs-Bitte
+OK   kein horizontales Überlaufen (termine vergangen) – [390, 390]
+OK   App startet offline (aus SW-Cache)
+OK   Schriften offline geladen
+OK   Karte offline: verständlicher Hinweis, kein iframe – ['Karte offline nicht verfügbar – Adresse oben antippen oder später erneut öffnen.', True]
+OK   Buchung funktioniert offline
+OK   Kanal „Keine“: „Keine Erinnerungen gewünscht“, keine Vorschau
+OK   kein horizontales Überlaufen (360px start) – [360, 360]
+OK   kein horizontales Überlaufen (360px leistungen) – [360, 360]
+OK   kein horizontales Überlaufen (360px buchen) – [360, 360]
+OK   kein horizontales Überlaufen (360px zeiten) – [360, 360]
+OK   kein horizontales Überlaufen (360px kontakt) – [360, 360]
+OK   kein horizontales Überlaufen (360px termine) – [360, 360]
+OK   kein horizontales Überlaufen (360px slots) – [360, 360]
+OK   kein horizontales Überlaufen (desktop) – [1280, 1280]
+OK   Standard-Design ist „Klassisch“ (kein data-theme)
+OK   Umschalter „Design: Klassisch | Glas“ in der Fußzeile der Startseite – Design
+Klassisch
+Glas
+OK   Glas aktiv: data-theme=glass, gespeichert, theme-color, schwebende Navigation, aria-pressed – ['glass', 'glass', '#F3F0EB', '30px', 'true']
+OK   Glas: Kopfzeile mit backdrop-filter (blur + saturate) – blur(22px) saturate(1.85)
+OK   Glas bleibt nach Neuladen erhalten (localStorage)
+OK   kein horizontales Überlaufen (glas leistungen) – [390, 390]
+OK   Glas: Herrenschnitt 27 €
+OK   Zurück auf Klassisch
+OK   Keine Konsolenfehler / Seitenfehler / 404 der App – []
+
+Hinweis (fremde Inhalte, OSM-iframe):
+[main] console.error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED @ https://www.openstreetmap.org/export/embed.html?bbox=6.90661%2C51.21833%2C6.91861%2C51.22553&layer=mapnik&marker=51.2219329%2C6.9126149

@@ -1,6 +1,6 @@
 /* Service Worker – Cache-first für alle eigenen Dateien (offline-fähig).
    Bei Änderungen an Dateien VERSION erhöhen, damit Geräte die neue Fassung laden. */
-var VERSION = 'v6';
+var VERSION = 'v7';
 var CACHE = 'salon-pwa-' + VERSION;
 var ASSETS = [
   './',
@@ -9,11 +9,14 @@ var ASSETS = [
   './css/fonts.css',
   './css/base.css',
   './css/app.css',
+  './css/theme-glass.css',
+  './js/theme.js',
   './js/config.js',
   './js/booking.js',
   './js/app.js',
   './assets/fonts/fraunces-latin.woff2',
   './assets/fonts/fraunces-latin-ext.woff2',
+  './assets/fonts/fraunces-italic-latin.woff2',
   './assets/fonts/inter-latin.woff2',
   './assets/fonts/inter-latin-ext.woff2',
   './icons/icon-192.png',

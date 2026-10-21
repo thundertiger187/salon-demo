@@ -7,7 +7,9 @@ from playwright.sync_api import sync_playwright
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = '/tmp/site'; SUB = 'salon-demo'; PORT = 8765
 BASE = f'http://localhost:{PORT}/{SUB}/'
-SHOTS = os.path.join(ROOT, 'screens'); os.makedirs(SHOTS, exist_ok=True)
+GLASS = os.environ.get('THEME') == 'glass'  # THEME=glass python3 tests/e2e.py → gleicher Lauf im Design „Glas“
+GLASS_INIT = "try { localStorage.setItem('dg-kunden-design', 'glass'); } catch (e) {}"
+SHOTS = os.path.join(ROOT, 'screens', 'glas') if GLASS else os.path.join(ROOT, 'screens'); os.makedirs(SHOTS, exist_ok=True)
 results, errors = [], []
 
 def check(name, cond, detail=''):
@@ -71,6 +73,7 @@ def main():
                                       locale='de-DE', timezone_id='Europe/Berlin', accept_downloads=True,
                                       user_agent='Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36')
             ctx.add_init_script("window.__bip = false; addEventListener('beforeinstallprompt', () => { window.__bip = true; });")
+            if GLASS: ctx.add_init_script(GLASS_INIT)
             page = ctx.new_page(); attach(page, 'main')
             print('\n== Laden & Service Worker ==')
             page.goto(BASE); page.evaluate('localStorage.clear()'); page.reload()
@@ -374,12 +377,33 @@ def main():
 
             print('\n== 360 px / Desktop ==')
             p2 = browser.new_page(viewport={'width': 360, 'height': 740}, is_mobile=True, has_touch=True, locale='de-DE', timezone_id='Europe/Berlin'); attach(p2, '360')
+            if GLASS: p2.add_init_script(GLASS_INIT)
             for h in ['start', 'leistungen', 'buchen', 'zeiten', 'kontakt', 'termine']:
                 p2.goto(BASE + '#' + h); p2.wait_for_selector(f'#v-{h}.active'); p2.wait_for_timeout(150); no_overflow(p2, f'360px {h}')
             p2.goto(BASE + '#buchen'); p2.click('[data-service="d-schnitt"]'); p2.click('[data-staff="any"]'); p2.wait_for_selector('.time'); no_overflow(p2, '360px slots')
             p2.close()
             p3 = browser.new_page(viewport={'width': 1280, 'height': 860}); attach(p3, 'desktop')
+            if GLASS: p3.add_init_script(GLASS_INIT)
             p3.goto(BASE); p3.wait_for_selector('.hero'); p3.wait_for_timeout(600); p3.screenshot(path=os.path.join(SHOTS, 'desktop.png')); no_overflow(p3, 'desktop'); p3.close()
+
+            print('\n== Design-Umschalter (Klassisch / Glas) ==')
+            p4 = browser.new_page(viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True, locale='de-DE'); attach(p4, 'design')
+            p4.goto(BASE); p4.evaluate('localStorage.clear()'); p4.reload(); p4.wait_for_selector('.hero')
+            check('Standard-Design ist „Klassisch“ (kein data-theme)', p4.evaluate("document.documentElement.getAttribute('data-theme')") is None)
+            pick = p4.locator('#v-start .design-pick')
+            check('Umschalter „Design: Klassisch | Glas“ in der Fußzeile der Startseite', pick.count() == 1 and 'Design' in pick.inner_text() and 'Glas' in pick.inner_text(), pick.inner_text() if pick.count() else '')
+            p4.click('#v-start [data-theme-set=glass]')
+            st = p4.evaluate("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('dg-kunden-design'), document.querySelector('meta[name=theme-color]').content, getComputedStyle(document.querySelector('.bnav')).borderRadius, document.querySelector('#v-start [data-theme-set=glass]').getAttribute('aria-pressed')]")
+            check('Glas aktiv: data-theme=glass, gespeichert, theme-color, schwebende Navigation, aria-pressed', st[0] == 'glass' and st[1] == 'glass' and st[2].upper() == '#F3F0EB' and st[3] == '30px' and st[4] == 'true', st)
+            bf = p4.evaluate("(() => { const cs = getComputedStyle(document.querySelector('.top')); return cs.backdropFilter || cs.webkitBackdropFilter; })()")
+            check('Glas: Kopfzeile mit backdrop-filter (blur + saturate)', 'blur' in bf and 'saturate' in bf, bf)
+            p4.reload(); p4.wait_for_selector('.hero')
+            check('Glas bleibt nach Neuladen erhalten (localStorage)', p4.evaluate("document.documentElement.getAttribute('data-theme')") == 'glass')
+            p4.goto(BASE + '#leistungen'); p4.wait_for_selector('#v-leistungen.active'); no_overflow(p4, 'glas leistungen')
+            check('Glas: Herrenschnitt 27 €', '27' in p4.inner_text('#v-leistungen'))
+            p4.click('#v-leistungen [data-theme-set=klassisch]')
+            check('Zurück auf Klassisch', p4.evaluate("[document.documentElement.getAttribute('data-theme'), localStorage.getItem('dg-kunden-design'), document.querySelector('meta[name=theme-color]').content]") == [None, 'klassisch', '#F6F1EA'])
+            p4.close()
             browser.close()
     finally:
         srv.terminate()
@@ -389,9 +413,9 @@ def main():
     other = [e for e in errors if e not in app_errors]
     check('Keine Konsolenfehler / Seitenfehler / 404 der App', not app_errors, app_errors[:10])
     ok = sum(1 for r in results if r[1])
-    out = [f'E2E {time.strftime("%Y-%m-%d %H:%M")} – {ok}/{len(results)} bestanden – {BASE}'] + [('OK   ' if r[1] else 'FAIL ') + r[0] + (f' – {r[2]}' if r[2] != '' else '') for r in results]
+    out = [f'E2E{" (Design Glas)" if GLASS else ""} {time.strftime("%Y-%m-%d %H:%M")} – {ok}/{len(results)} bestanden – {BASE}'] + [('OK   ' if r[1] else 'FAIL ') + r[0] + (f' – {r[2]}' if r[2] != '' else '') for r in results]
     if other: out += ['', 'Hinweis (fremde Inhalte, OSM-iframe):'] + other[:5]
-    open(os.path.join(ROOT, 'tests', 'e2e-ergebnis.txt'), 'w', encoding='utf-8').write('\n'.join(out) + '\n')
+    open(os.path.join(ROOT, 'tests', 'e2e-ergebnis-glas.txt' if GLASS else 'e2e-ergebnis.txt'), 'w', encoding='utf-8').write('\n'.join(out) + '\n')
     print(f'\n{ok}/{len(results)} bestanden')
     sys.exit(0 if ok == len(results) else 1)
 
